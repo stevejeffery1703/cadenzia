@@ -66,24 +66,20 @@ body {
 }
 
 /* ----------------------------------------------------------------------------
-   Type scale. Display, headings and track titles in Fraunces (optical sizing
-   on); everything else in Hanken Grotesk.
+   Type scale. Display, headings and track titles in Spectral; everything
+   else in Hanken Grotesk.
 ---------------------------------------------------------------------------- */
 .font-display,
 h1,
 h2,
 h3 {
-  font-family: 'Newsreader', Georgia, serif;
-  font-optical-sizing: none;
-  font-variation-settings: 'opsz' 72;
+  font-family: 'Spectral', Georgia, serif;
   font-weight: 400;
   letter-spacing: -0.005em;
 }
 
 .text-display {
-  font-family: 'Newsreader', Georgia, serif;
-  font-optical-sizing: none;
-  font-variation-settings: 'opsz' 72;
+  font-family: 'Spectral', Georgia, serif;
   font-weight: 300;
   font-size: clamp(3.25rem, 8vw, 5.25rem); /* 52–84px */
   line-height: 1.02;
@@ -91,9 +87,7 @@ h3 {
 }
 
 .text-h1 {
-  font-family: 'Newsreader', Georgia, serif;
-  font-optical-sizing: none;
-  font-variation-settings: 'opsz' 72;
+  font-family: 'Spectral', Georgia, serif;
   font-weight: 400;
   font-size: clamp(2.25rem, 5vw, 3rem);
   line-height: 1.08;
@@ -101,9 +95,7 @@ h3 {
 }
 
 .text-h2 {
-  font-family: 'Newsreader', Georgia, serif;
-  font-optical-sizing: none;
-  font-variation-settings: 'opsz' 72;
+  font-family: 'Spectral', Georgia, serif;
   font-weight: 400;
   font-size: clamp(1.6rem, 3.5vw, 2.05rem);
   line-height: 1.14;
@@ -111,9 +103,7 @@ h3 {
 }
 
 .text-track {
-  font-family: 'Newsreader', Georgia, serif;
-  font-optical-sizing: none;
-  font-variation-settings: 'opsz' 72;
+  font-family: 'Spectral', Georgia, serif;
   font-weight: 400;
   font-style: italic;
   font-size: 1.45rem;

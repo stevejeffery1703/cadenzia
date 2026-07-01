@@ -12,7 +12,7 @@ async function ensureFonts() {
   if (!document.fonts || !document.fonts.load) return;
   try {
     await Promise.all([
-      document.fonts.load('300 96px "Newsreader"'),
+      document.fonts.load('300 96px "Spectral"'),
       document.fonts.load('400 28px "Hanken Grotesk"'),
     ]);
   } catch {
@@ -50,7 +50,7 @@ export async function buildShareCard(track) {
   // Wordmark, in ink.
   ctx.textAlign = 'center';
   ctx.fillStyle = '#232019';
-  ctx.font = '300 108px "Newsreader", Georgia, serif';
+  ctx.font = '300 108px "Spectral", Georgia, serif';
   ctx.fillText(APP_NAME, SIZE / 2, SIZE - 150);
 
   // Caption — plain, no hype.

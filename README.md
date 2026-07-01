@@ -34,7 +34,7 @@ A warm, editorial, **light** aesthetic — gallery paper, not a dark app.
   mostly in the artwork. All tokens are CSS custom properties in
   [`src/styles/global.css`](src/styles/global.css), exposed to Tailwind (incl.
   opacity modifiers) via `--rgb-*` channel variables.
-- **Type** — **Newsreader** (an optically-sized editorial serif) for display,
+- **Type** — **Spectral** (a warm, quiet editorial serif) for display,
   headlines, and track titles; **Hanken Grotesk** for UI. Distinctive, not the
   Cormorant/Inter default. Scale lives in `global.css` (`.text-display`, `.text-h1`…).
 - **Mark** — a monoline note whose flag flows into a sound wave

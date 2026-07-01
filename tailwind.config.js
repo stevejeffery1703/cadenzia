@@ -26,7 +26,7 @@ export default {
         line: 'rgb(var(--rgb-line) / <alpha-value>)',
       },
       fontFamily: {
-        display: ['Newsreader', 'Georgia', 'serif'],
+        display: ['Spectral', 'Georgia', 'serif'],
         sans: ['"Hanken Grotesk"', 'system-ui', '-apple-system', 'sans-serif'],
       },
       letterSpacing: {
