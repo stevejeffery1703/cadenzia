@@ -27,6 +27,15 @@
       "binding": "SESSIONS",
       "id": "16841f4832a946cda00ddd158c6c8ace"
     }
+  ],
+
+  // Custom domain — Cloudflare provisions the DNS record automatically
+  // since the zone is on this account.
+  "routes": [
+    {
+      "pattern": "cadenzia.app",
+      "custom_domain": true
+    }
   ]
 
   // Secrets (set with `wrangler secret put NAME`, never commit):
