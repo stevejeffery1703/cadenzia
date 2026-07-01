@@ -1,0 +1,253 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ----------------------------------------------------------------------------
+   Cadenzia — token system. A warm, editorial, light aesthetic: gallery paper,
+   espresso ink line-work, a single precious pine accent, clay warmth in the
+   artwork. Everything is a CSS custom property.
+---------------------------------------------------------------------------- */
+:root {
+  /* Surfaces — warm paper, never stark white. */
+  --color-paper: #f5f1e8; /* primary background — warm alabaster */
+  --color-paper-raised: #fcfaf4; /* cards, panels — lifted, lighter */
+  --color-paper-wash: #ece6d8; /* subtle fills, active rows, hovers */
+
+  /* Ink — warm near-black for text and the fine line-work. */
+  --color-ink: #232019;
+  --color-ink-soft: #6b6358; /* secondary text */
+  --color-ink-faint: #a79e8f; /* captions, placeholders */
+
+  /* Lines — hairline borders and dividers. */
+  --color-line: #e3dccd;
+
+  /* Accent — deep pine. Precious; the mark, links, active and live states. */
+  --color-accent: #2f4a3c;
+  --color-accent-bright: #3e624f;
+
+  /* Warm — muted clay/amber. Lives mostly in the artwork. */
+  --color-warm: #c2773f;
+
+  /* The same tokens as RGB channels, so Tailwind can compose opacity
+     (e.g. border-accent/40, bg-ink/5). Keep these in sync with the hexes. */
+  --rgb-paper: 245 241 232;
+  --rgb-paper-raised: 252 250 244;
+  --rgb-paper-wash: 236 230 216;
+  --rgb-ink: 35 32 25;
+  --rgb-ink-soft: 107 99 88;
+  --rgb-ink-faint: 167 158 143;
+  --rgb-line: 227 220 205;
+  --rgb-accent: 47 74 60;
+  --rgb-accent-bright: 62 98 79;
+  --rgb-warm: 194 119 63;
+
+  /* Motion — slow and deliberate. */
+  --fade: 300ms;
+  --ease-calm: cubic-bezier(0.4, 0, 0.2, 1);
+
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--color-paper);
+}
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ----------------------------------------------------------------------------
+   Type scale. Display, headings and track titles in Fraunces (optical sizing
+   on); everything else in Hanken Grotesk.
+---------------------------------------------------------------------------- */
+.font-display,
+h1,
+h2,
+h3 {
+  font-family: 'Newsreader', Georgia, serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+.text-display {
+  font-family: 'Newsreader', Georgia, serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-size: clamp(3.25rem, 8vw, 5.25rem); /* 52–84px */
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+}
+
+.text-h1 {
+  font-family: 'Newsreader', Georgia, serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: clamp(2.25rem, 5vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+
+.text-h2 {
+  font-family: 'Newsreader', Georgia, serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: clamp(1.6rem, 3.5vw, 2.05rem);
+  line-height: 1.14;
+  letter-spacing: -0.005em;
+}
+
+.text-track {
+  font-family: 'Newsreader', Georgia, serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 1.45rem;
+  letter-spacing: 0;
+}
+
+.text-label {
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-weight: 500;
+  font-size: 0.75rem; /* 12px */
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.text-caption {
+  font-size: 0.75rem;
+  color: var(--color-ink-faint);
+}
+
+/* ----------------------------------------------------------------------------
+   Components
+---------------------------------------------------------------------------- */
+@layer components {
+  /* Primary action — a quiet solid-ink pill that warms to pine on hover. */
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-full bg-ink px-7 py-3 font-sans text-sm font-medium text-paper transition-colors;
+    transition-duration: var(--fade);
+  }
+  .btn-primary:hover {
+    @apply bg-accent;
+  }
+
+  /* Secondary / ghost — hairline outline. */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-full border border-line bg-transparent px-7 py-3 font-sans text-sm font-medium text-ink-soft transition-colors;
+    transition-duration: var(--fade);
+  }
+  .btn-ghost:hover {
+    @apply border-ink text-ink;
+  }
+
+  /* Elevated panel — hairline border + the faintest lift, no SaaS drop-shadow. */
+  .panel {
+    @apply rounded-xl border border-line bg-paper-raised;
+    box-shadow: 0 1px 2px rgba(35, 32, 25, 0.03), 0 8px 24px rgba(35, 32, 25, 0.03);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Loading indicator — a single thin pine line at the top of the viewport.
+---------------------------------------------------------------------------- */
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-accent);
+  z-index: 100;
+  animation: loading-progress 1.4s var(--ease-calm) infinite;
+}
+
+@keyframes loading-progress {
+  0% {
+    left: 0;
+    width: 0;
+  }
+  50% {
+    left: 0;
+    width: 70%;
+  }
+  100% {
+    left: 100%;
+    width: 0;
+  }
+}
+
+/* Page fade — 300ms, no slides or bounces. */
+.page-enter {
+  animation: page-fade var(--fade) var(--ease-calm) both;
+}
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Artwork breathing — one ambient animation, barely perceptible. */
+.breathe {
+  animation: breathe 52s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Focus + motion accessibility
+---------------------------------------------------------------------------- */
+*:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-paper);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .breathe,
+  .loading-bar {
+    animation: none;
+  }
+}
