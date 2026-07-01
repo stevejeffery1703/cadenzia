@@ -108,7 +108,6 @@ function Footer() {
             </Link>
           ))}
         </div>
-        <p className="text-caption">Every session, your own cadenza.</p>
         <p className="text-caption">© {new Date().getFullYear()} {APP_NAME}. No ads. No data sold.</p>
       </div>
     </footer>
