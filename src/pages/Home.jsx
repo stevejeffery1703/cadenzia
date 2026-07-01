@@ -24,7 +24,7 @@ function Hero() {
     <section className="mx-auto flex min-h-[76vh] max-w-content flex-col items-center justify-center px-6 text-center">
       <Logo size={52} className="mb-7" />
       <h1 className="text-display text-ink">{APP_NAME}</h1>
-      <p className="mt-6 text-xl font-light text-ink-soft">Music for your best thinking.</p>
+      <p className="mt-6 text-xl font-light text-ink-soft">Find your cadence.</p>
       <Link to="/app" className="btn-primary mt-12">
         Begin listening
       </Link>
@@ -38,7 +38,6 @@ function Previews() {
   const featured = ['deep-focus', 'flow-state', 'restoration'].map(getCategory);
   return (
     <section className="mx-auto max-w-content px-6 py-20">
-      <p className="text-label mb-12 text-center text-ink-soft">Find your cadence</p>
       <div className="grid gap-8 sm:grid-cols-3">
         {featured.map((c) => (
           <Link key={c.id} to="/app" className="group block">
@@ -109,6 +108,7 @@ function Footer() {
             </Link>
           ))}
         </div>
+        <p className="text-caption">Every session, your own cadenza.</p>
         <p className="text-caption">© {new Date().getFullYear()} {APP_NAME}. No ads. No data sold.</p>
       </div>
     </footer>

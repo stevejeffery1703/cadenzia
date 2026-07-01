@@ -1,7 +1,7 @@
 {
   "name": "Cadenzia",
   "short_name": "Cadenzia",
-  "description": "Music for your best thinking. Curated audio for deep concentration, flow, and creative work.",
+  "description": "Find your cadence. Curated audio for deep concentration, flow, and creative work.",
   "start_url": "/app",
   "scope": "/",
   "display": "standalone",
