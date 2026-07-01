@@ -6,14 +6,14 @@
 
 import { json } from '../middleware/cors.js';
 import { authedUser, sign } from '../lib/jwt.js';
-import { select } from '../lib/supabase.js';
+import { selectOne } from '../lib/db.js';
 
 export async function link(request, env) {
   const claims = await authedUser(request, env);
   if (!claims) return json({ error: 'Sign in first' }, { status: 401, env });
 
-  const users = await select(env, 'users', `id=eq.${claims.sub}&select=subscription_status`);
-  if (users[0]?.subscription_status !== 'active') {
+  const user = await selectOne(env, 'users', { id: claims.sub }, ['subscription_status']);
+  if (user?.subscription_status !== 'active') {
     return json({ error: 'Downloads are a subscriber benefit' }, { status: 403, env });
   }
 

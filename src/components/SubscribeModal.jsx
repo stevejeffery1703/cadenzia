@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { startCheckout } from '../utils/stripe';
-import { signInWithEmail } from '../utils/supabase';
+import { signInWithEmail } from '../utils/auth';
 import { getToken } from '../utils/api';
 import { PRICE, APP_NAME, DOWNLOAD_EXPIRY_DAYS } from '../utils/config';
 

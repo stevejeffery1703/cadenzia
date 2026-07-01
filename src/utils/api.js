@@ -1,5 +1,5 @@
 // Tiny fetch wrapper for the Worker API. All endpoints live under /api.
-// Auth token (Supabase session JWT) is attached when present.
+// Auth token (session JWT) is attached when present.
 
 const TOKEN_KEY = 'cad_token';
 

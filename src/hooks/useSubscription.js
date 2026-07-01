@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getMe } from '../utils/supabase';
+import { getMe } from '../utils/auth';
 import { getToken } from '../utils/api';
 
 // Resolves the current user's subscription status from the Worker, which checks
-// Supabase (kept in sync by the Stripe webhook). Anonymous users are simply
+// D1 (kept in sync by the Stripe webhook). Anonymous users are simply
 // "free". Cached in memory; refreshed on mount and on demand.
 export function useSubscription() {
   const [user, setUser] = useState(null);

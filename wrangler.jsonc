@@ -29,6 +29,16 @@
     }
   ],
 
+  // Users, subscriptions, email list, listening stats, play counter.
+  // Schema lives in migrations/ (applied via `wrangler d1 migrations apply`).
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cadenzia-db",
+      "database_id": "b883ed87-96e1-4e9e-b6a3-160649bb03a9"
+    }
+  ],
+
   // Custom domain — Cloudflare provisions the DNS record automatically
   // since the zone is on this account.
   "routes": [
@@ -39,7 +49,6 @@
   ]
 
   // Secrets (set with `wrangler secret put NAME`, never commit):
-  //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
   //   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID,
   //   RESEND_API_KEY, APP_URL, JWT_SECRET
 }

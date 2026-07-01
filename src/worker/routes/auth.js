@@ -4,12 +4,12 @@
 //   GET  /api/auth/me          → returns the current user + subscription status
 //   POST /api/auth/delete      → deletes user + all associated data
 //
-// For production you may prefer Supabase Auth's own magic links; this keeps the
-// MVP self-contained with one fewer moving part.
+// For production you may prefer a dedicated auth provider's own magic links;
+// this keeps the MVP self-contained with one fewer moving part.
 
 import { json } from '../middleware/cors.js';
 import { sign, authedUser } from '../lib/jwt.js';
-import { select, insert, update, remove } from '../lib/supabase.js';
+import { selectOne, insertRow, deleteRows } from '../lib/db.js';
 import { sendEmail } from './email.js';
 
 const sixDigits = () => String(Math.floor(100000 + Math.random() * 900000));
@@ -35,21 +35,20 @@ export async function verify(request, env) {
   const { email, otp } = await request.json();
   if (!email || !otp) return json({ error: 'Email and code required' }, { status: 400, env });
 
-  const stored = await env.SESSIONS.get(`otp:${email.toLowerCase()}`);
+  const normalizedEmail = email.toLowerCase();
+  const stored = await env.SESSIONS.get(`otp:${normalizedEmail}`);
   if (!stored || stored !== otp) {
     return json({ error: 'Invalid or expired code' }, { status: 401, env });
   }
-  await env.SESSIONS.delete(`otp:${email.toLowerCase()}`);
+  await env.SESSIONS.delete(`otp:${normalizedEmail}`);
 
   // Upsert the user.
-  let users = await select(env, 'users', `email=eq.${encodeURIComponent(email)}&select=*`);
-  let user = users[0];
+  let user = await selectOne(env, 'users', { email: normalizedEmail });
   if (!user) {
-    const created = await insert(env, 'users', {
-      email: email.toLowerCase(),
+    user = await insertRow(env, 'users', {
+      email: normalizedEmail,
       subscription_status: 'free',
     });
-    user = created[0];
   }
 
   const token = await sign({ sub: user.id, email: user.email }, env.JWT_SECRET, {
@@ -63,8 +62,7 @@ export async function me(request, env) {
   const claims = await authedUser(request, env);
   if (!claims) return json({ error: 'Unauthorized' }, { status: 401, env });
 
-  const users = await select(env, 'users', `id=eq.${claims.sub}&select=*`);
-  const user = users[0];
+  const user = await selectOne(env, 'users', { id: claims.sub });
   if (!user) return json({ error: 'Not found' }, { status: 404, env });
   return json(publicUser(user), { env });
 }
@@ -73,8 +71,7 @@ export async function deleteAccount(request, env) {
   const claims = await authedUser(request, env);
   if (!claims) return json({ error: 'Unauthorized' }, { status: 401, env });
 
-  const users = await select(env, 'users', `id=eq.${claims.sub}&select=*`);
-  const user = users[0];
+  const user = await selectOne(env, 'users', { id: claims.sub });
 
   // Cancel Stripe subscription if any (best effort).
   if (user?.stripe_customer_id) {
@@ -85,12 +82,12 @@ export async function deleteAccount(request, env) {
     }
   }
 
-  // Delete all associated data. (With ON DELETE CASCADE in the schema this could
-  // be a single delete; explicit here so it's obvious what's removed.)
-  await remove(env, 'listening_sessions', `user_id=eq.${claims.sub}`);
-  await remove(env, 'subscriptions', `user_id=eq.${claims.sub}`);
-  await remove(env, 'email_subscribers', `email=eq.${encodeURIComponent(claims.email)}`);
-  await remove(env, 'users', `id=eq.${claims.sub}`);
+  // Delete all associated data. (The schema's ON DELETE CASCADE could do this in
+  // one delete; explicit here so it's obvious what's removed.)
+  await deleteRows(env, 'listening_sessions', { user_id: claims.sub });
+  await deleteRows(env, 'subscriptions', { user_id: claims.sub });
+  await deleteRows(env, 'email_subscribers', { email: claims.email });
+  await deleteRows(env, 'users', { id: claims.sub });
 
   return json({ ok: true }, { env });
 }

@@ -20,7 +20,7 @@ concentration, flow state, and creative thinking. Dark, sparse, and considered.
 | PWA      | Web App Manifest + service worker (installable, background playback) |
 | Backend  | Cloudflare Workers (API + static assets + R2 audio streaming) |
 | Storage  | Cloudflare R2 (audio), Cloudflare KV (sessions / share + auth tokens) |
-| Database | Supabase (PostgreSQL, RLS enabled) |
+| Database | Cloudflare D1 (SQLite) |
 | Payments | Stripe (hosted Checkout + Billing Portal + signature-verified webhook) |
 | Email    | Resend (sign-in codes + new-track announcements) |
 
@@ -62,11 +62,11 @@ A warm, editorial, **light** aesthetic — gallery paper, not a dark app.
   [`src/components/ShareInterstitial.jsx`](src/components/ShareInterstitial.jsx)).
 - **Sharing** — Web Share API with the artwork card, platform-intent fallbacks
   (X/LinkedIn/Facebook). Honor system: unlock on share-sheet open, no verification.
-- **Play counter** — honest social proof, Supabase-backed, atomically incremented
+- **Play counter** — honest social proof, D1-backed, atomically incremented
   on track completion, held back below a threshold
   ([`src/components/PlayCounter.jsx`](src/components/PlayCounter.jsx)).
 - **Subscription** — Stripe Checkout at **$2.99/month**, Billing Portal, webhook
-  → Supabase. Passwordless auth (emailed code → session JWT).
+  → D1. Passwordless auth (emailed code → session JWT).
 - Landing, Science, Account (no gamification), plain-English Privacy. PWA.
 
 > Audio files are **placeholders** — `tracks.js` points at `/audio/<id>.mp3`.
@@ -87,18 +87,21 @@ npm run worker:dev
 ```
 
 Copy `.env.example` → `.env` and fill in keys. For the Worker, put secrets in a
-`.dev.vars` file (same keys, no `VITE_` prefix) for `wrangler dev`.
+`.dev.vars` file (same keys, no `VITE_` prefix) for `wrangler dev`. D1 needs its
+own local schema too: `wrangler d1 migrations apply cadenzia-db --local`.
 
 ## Setup checklist
 
-1. **Supabase** — run [`supabase/schema.sql`](supabase/schema.sql) (creates the
-   tables, the `play_counter` row, and the `increment_plays()` function); copy the
-   URL + service-role key into Worker secrets.
+1. **Cloudflare D1** — create the database (`wrangler d1 create cadenzia-db`),
+   put the returned `database_id` into [`wrangler.jsonc`](wrangler.jsonc), then
+   apply the schema: `wrangler d1 migrations apply cadenzia-db --remote`
+   (creates the tables and the `play_counter` seed row — see
+   [`migrations/0001_init.sql`](migrations/0001_init.sql)).
 2. **Stripe (test mode first)** — create a $2.99/month recurring price; set
    `STRIPE_PRICE_ID`. Add a webhook to `/api/subscription/webhook` and set
    `STRIPE_WEBHOOK_SECRET`.
-3. **Cloudflare** — create the R2 bucket and a KV namespace; put the KV id into
-   [`wrangler.jsonc`](wrangler.jsonc).
+3. **Cloudflare R2 + KV** — create the R2 bucket and a KV namespace; put the KV
+   id into [`wrangler.jsonc`](wrangler.jsonc).
 4. **Resend** — verify a sending domain; set `RESEND_API_KEY`.
 5. **Secrets** — `wrangler secret put NAME` for each server-side value (see
    [`.env.example`](.env.example)). Never commit real secrets.

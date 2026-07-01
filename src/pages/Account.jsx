@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { signInWithEmail, signOut } from '../utils/supabase';
+import { signInWithEmail, signOut } from '../utils/auth';
 import { openBillingPortal } from '../utils/stripe';
 import { api } from '../utils/api';
 import StatsPanel from '../components/StatsPanel';

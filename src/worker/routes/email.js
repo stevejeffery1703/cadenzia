@@ -5,7 +5,7 @@
 // We only ever email about new music. Every email carries an unsubscribe link.
 
 import { json } from '../middleware/cors.js';
-import { select, insert, update } from '../lib/supabase.js';
+import { selectOne, insertRow, updateRows } from '../lib/db.js';
 
 export async function subscribe(request, env) {
   const { email, consent } = await request.json();
@@ -13,19 +13,16 @@ export async function subscribe(request, env) {
     return json({ error: 'Email and consent required' }, { status: 400, env });
   }
 
-  const existing = await select(
-    env,
-    'email_subscribers',
-    `email=eq.${encodeURIComponent(email)}&select=id`
-  );
-  if (existing[0]) {
-    await update(env, 'email_subscribers', `id=eq.${existing[0].id}`, {
+  const normalizedEmail = email.toLowerCase();
+  const existing = await selectOne(env, 'email_subscribers', { email: normalizedEmail }, ['id']);
+  if (existing) {
+    await updateRows(env, 'email_subscribers', { id: existing.id }, {
       consent_given: true,
       unsubscribed: false,
     });
   } else {
-    await insert(env, 'email_subscribers', {
-      email: email.toLowerCase(),
+    await insertRow(env, 'email_subscribers', {
+      email: normalizedEmail,
       consent_given: true,
       unsubscribed: false,
     });
@@ -39,7 +36,7 @@ export async function unsubscribe(request, env) {
   const email = url.searchParams.get('email');
   if (!email) return new Response('Missing email', { status: 400 });
 
-  await update(env, 'email_subscribers', `email=eq.${encodeURIComponent(email)}`, {
+  await updateRows(env, 'email_subscribers', { email: email.toLowerCase() }, {
     unsubscribed: true,
   });
 

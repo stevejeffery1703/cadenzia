@@ -1,14 +1,14 @@
 // Stripe subscription lifecycle.
 //   POST /api/subscription/checkout → creates a Checkout Session, returns hosted URL
 //   POST /api/subscription/portal   → creates a Billing Portal session
-//   POST /api/subscription/webhook  → Stripe events → update Supabase
+//   POST /api/subscription/webhook  → Stripe events → update D1
 //
 // We never collect card details — Stripe's hosted Checkout does. $1.99/month
 // recurring price is STRIPE_PRICE_ID.
 
 import { json } from '../middleware/cors.js';
 import { authedUser } from '../lib/jwt.js';
-import { select, update, insert } from '../lib/supabase.js';
+import { selectOne, updateRows, insertRow } from '../lib/db.js';
 
 // Stripe wants application/x-www-form-urlencoded; this flattens nested params.
 function form(params, prefix = '') {
@@ -39,15 +39,14 @@ export async function checkout(request, env) {
   const claims = await authedUser(request, env);
   if (!claims) return json({ error: 'Sign in first' }, { status: 401, env });
 
-  const users = await select(env, 'users', `id=eq.${claims.sub}&select=*`);
-  const user = users[0];
+  const user = await selectOne(env, 'users', { id: claims.sub });
 
   // Reuse or create the Stripe customer.
   let customerId = user?.stripe_customer_id;
   if (!customerId) {
     const customer = await stripe(env, 'customers', { email: claims.email });
     customerId = customer.id;
-    await update(env, 'users', `id=eq.${claims.sub}`, { stripe_customer_id: customerId });
+    await updateRows(env, 'users', { id: claims.sub }, { stripe_customer_id: customerId });
   }
 
   const session = await stripe(env, 'checkout/sessions', {
@@ -66,8 +65,8 @@ export async function portal(request, env) {
   const claims = await authedUser(request, env);
   if (!claims) return json({ error: 'Sign in first' }, { status: 401, env });
 
-  const users = await select(env, 'users', `id=eq.${claims.sub}&select=*`);
-  const customerId = users[0]?.stripe_customer_id;
+  const user = await selectOne(env, 'users', { id: claims.sub });
+  const customerId = user?.stripe_customer_id;
   if (!customerId) return json({ error: 'No subscription' }, { status: 400, env });
 
   const session = await stripe(env, 'billing_portal/sessions', {
@@ -78,7 +77,7 @@ export async function portal(request, env) {
 }
 
 // Stripe webhook. Verifies the signature, then mirrors subscription state into
-// Supabase so the app can gate audio by `subscription_status`.
+// D1 so the app can gate audio by `subscription_status`.
 export async function webhook(request, env) {
   const sig = request.headers.get('stripe-signature');
   const body = await request.text();
@@ -113,17 +112,17 @@ export async function webhook(request, env) {
 }
 
 async function syncSubscription(env, customerId, subscriptionId, status, periodEnd) {
-  const users = await select(env, 'users', `stripe_customer_id=eq.${customerId}&select=id`);
-  const user = users[0];
+  const user = await selectOne(env, 'users', { stripe_customer_id: customerId }, ['id']);
   if (!user) return;
 
-  await update(env, 'users', `id=eq.${user.id}`, { subscription_status: status });
+  await updateRows(env, 'users', { id: user.id }, { subscription_status: status });
 
   if (subscriptionId) {
-    const existing = await select(
+    const existing = await selectOne(
       env,
       'subscriptions',
-      `stripe_subscription_id=eq.${subscriptionId}&select=id`
+      { stripe_subscription_id: subscriptionId },
+      ['id']
     );
     const patch = {
       user_id: user.id,
@@ -131,10 +130,10 @@ async function syncSubscription(env, customerId, subscriptionId, status, periodE
       status,
       current_period_end: periodEnd,
     };
-    if (existing[0]) {
-      await update(env, 'subscriptions', `id=eq.${existing[0].id}`, patch);
+    if (existing) {
+      await updateRows(env, 'subscriptions', { id: existing.id }, patch);
     } else {
-      await insert(env, 'subscriptions', patch);
+      await insertRow(env, 'subscriptions', patch);
     }
   }
 }
