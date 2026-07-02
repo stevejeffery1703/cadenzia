@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Science-backed, AI-generated focus music. No ads. No dark patterns.",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

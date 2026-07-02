@@ -105,12 +105,18 @@ export async function deleteAccount(request, env) {
 
   const user = await selectOne(env, 'users', { id: claims.sub });
 
-  // Cancel Stripe subscription if any (best effort).
+  // Cancel Stripe subscription if any (best effort — local data still gets
+  // deleted below even if this fails, since the account deletion itself
+  // shouldn't hang on Stripe). Logged rather than swallowed: once the D1 rows
+  // are gone below, this log line is the only trace left to reconcile a
+  // subscription that kept billing after the account was deleted.
   if (user?.stripe_customer_id) {
     try {
       await cancelStripeSubscriptions(env, user.stripe_customer_id);
-    } catch {
-      /* don't block deletion on Stripe errors */
+    } catch (err) {
+      console.error(
+        `[auth.deleteAccount] Failed to cancel Stripe subscriptions for customer ${user.stripe_customer_id} (user ${claims.sub}): ${err.stack || err}`
+      );
     }
   }
 

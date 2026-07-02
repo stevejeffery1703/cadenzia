@@ -6,6 +6,10 @@ export function corsHeaders(env) {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
+    // The allowed origin isn't dynamic today, but this tells any cache in
+    // front of the Worker that the response varies by request origin, so a
+    // shared cache can't serve one origin's CORS headers to another's request.
+    Vary: 'Origin',
   };
 }
 
