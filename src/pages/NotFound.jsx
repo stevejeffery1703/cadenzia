@@ -1,10 +1,19 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useDocumentHead } from '../hooks/useDocumentHead';
 import Logo from '../components/Logo';
 
 // Quiet, not apologetic. The same warmth as everywhere else on the site.
+// Not in PAGE_META (there's no single canonical URL for arbitrary bad
+// paths, and the Worker already reports a real 404 status for these — see
+// serveStaticOrNotFound — so there's nothing here for a crawler to index).
 export default function NotFound() {
-  useDocumentHead({ title: 'Page not found — Cadenzia' });
+  useEffect(() => {
+    const prev = document.title;
+    document.title = 'Page not found — Cadenzia';
+    return () => {
+      document.title = prev;
+    };
+  }, []);
   return (
     <main className="page-enter mx-auto flex min-h-[70vh] max-w-content flex-col items-center justify-center px-6 text-center">
       <Logo size={40} className="mb-6" />

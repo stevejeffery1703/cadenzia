@@ -26,11 +26,7 @@ const STUDIES = [
 ];
 
 export default function Science() {
-  useDocumentHead({
-    title: 'The science, plainly — Cadenzia',
-    description:
-      'How binaural beats and brainwave entrainment work, explained simply, with cited research and a frequency guide.',
-  });
+  useDocumentHead('/science');
   return (
     <main className="page-enter mx-auto max-w-3xl px-6 py-20">
       <h1 className="text-h1 text-ink">The science, plainly.</h1>

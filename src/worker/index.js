@@ -13,10 +13,14 @@ import * as download from './routes/download.js';
 import * as email from './routes/email.js';
 import * as plays from './routes/plays.js';
 import * as sessions from './routes/sessions.js';
+import { PAGE_META } from '../utils/pageMeta.js';
 
 // The app's real client-side routes — used to tell a genuine soft-404 apart
 // from a valid SPA route when both get served the same index.html shell.
-const KNOWN_ROUTES = new Set(['/', '/app', '/science', '/privacy', '/terms', '/account']);
+// Also what HTMLRewriter below uses to give each route's raw HTML (what
+// non-JS crawlers and social-media unfurlers see) its own title/description,
+// rather than every route sharing index.html's static defaults.
+const KNOWN_ROUTES = new Set(Object.keys(PAGE_META));
 
 // Stripe webhook needs the raw body, so it's matched before JSON parsing.
 const ROUTES = {
@@ -62,10 +66,15 @@ export default {
       try {
         return await handler(request, env, ctx);
       } catch (err) {
-        // Surfaces in `wrangler tail` / the Cloudflare dashboard's Worker Logs —
-        // the only observability we have without a third-party service.
+        // Full detail surfaces in `wrangler tail` / the Cloudflare dashboard's
+        // Worker Logs — the only observability we have without a third-party
+        // service. The client only ever gets a generic message: routes that
+        // want to tell the caller something specific return their own 4xx
+        // json() response directly rather than throwing, so anything landing
+        // here is an unexpected failure (e.g. a raw Stripe/Resend API error)
+        // that shouldn't leak internal detail to the response body.
         console.error(`[${key}] ${err.stack || err}`);
-        return json({ error: err.message || 'Server error' }, { status: 500, env });
+        return json({ error: 'Server error' }, { status: 500, env });
       }
     }
 
@@ -79,14 +88,36 @@ export default {
 // budget and can get garbage URLs indexed. If what comes back is the HTML
 // shell for a path that isn't one of our real routes, report a genuine 404
 // while still returning the shell, so the client router still renders its
-// own NotFound page for the human visitor.
+// own NotFound page for the human visitor. For a real route, rewrite the
+// shell's meta tags to that page's own title/description — the client-side
+// useDocumentHead hook does the same thing after React mounts, but crawlers
+// that don't execute JS (most social-media link unfurlers) only ever see
+// this server-rendered version.
 async function serveStaticOrNotFound(request, url, env) {
   const response = await env.ASSETS.fetch(request);
   const isHtmlShell = (response.headers.get('content-type') || '').includes('text/html');
-  if (isHtmlShell && !KNOWN_ROUTES.has(url.pathname)) {
+  if (!isHtmlShell) return response;
+
+  if (!KNOWN_ROUTES.has(url.pathname)) {
     return new Response(response.body, { status: 404, headers: response.headers });
   }
-  return response;
+  return rewriteMetaForPath(response, url.pathname);
+}
+
+function rewriteMetaForPath(response, path) {
+  const meta = PAGE_META[path];
+  if (!meta) return response;
+
+  const canonicalUrl = `https://cadenzia.app${path}`;
+  return new HTMLRewriter()
+    .on('title', { element: (el) => el.setInnerContent(meta.title) })
+    .on('meta[name="description"]', { element: (el) => el.setAttribute('content', meta.description) })
+    .on('meta[property="og:title"]', { element: (el) => el.setAttribute('content', meta.title) })
+    .on('meta[property="og:description"]', { element: (el) => el.setAttribute('content', meta.description) })
+    .on('meta[property="og:url"]', { element: (el) => el.setAttribute('content', canonicalUrl) })
+    .on('meta[name="twitter:title"]', { element: (el) => el.setAttribute('content', meta.title) })
+    .on('meta[name="twitter:description"]', { element: (el) => el.setAttribute('content', meta.description) })
+    .transform(response);
 }
 
 async function serveAudio(url, env) {

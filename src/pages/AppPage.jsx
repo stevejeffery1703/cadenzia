@@ -16,10 +16,7 @@ import SubscribeModal from '../components/SubscribeModal';
 // right. The one-hour free gate surfaces as a calm interstitial — never a wall,
 // never mid-track beyond the natural pause.
 export default function AppPage({ subscription }) {
-  useDocumentHead({
-    title: 'Listen — Cadenzia',
-    description: 'Stream deep focus, flow state, and creative-thinking audio — free for the first hour of every session.',
-  });
+  useDocumentHead('/app');
   const { isSubscriber, user } = subscription;
   const [showGate, setShowGate] = useState(false);
   const [showSubscribe, setShowSubscribe] = useState(false);
@@ -84,7 +81,7 @@ export default function AppPage({ subscription }) {
           <Library currentTrackId={audio.track?.id} onPlay={handlePlay} />
         </aside>
 
-        <Player audio={audio} isSubscriber={isSubscriber} />
+        <Player audio={audio} isSubscriber={isSubscriber} onResume={handlePlay} />
 
         {/* Session — right on desktop only. */}
         <aside className="hidden lg:block">

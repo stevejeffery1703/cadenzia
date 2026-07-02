@@ -12,11 +12,22 @@
     "enabled": true
   },
 
-  // Serve the Vite build output as static assets.
+  // Serve the Vite build output as static assets. run_worker_first: true so
+  // every request reaches the Worker before falling back to static serving —
+  // needed for two things in src/worker/index.js: reporting a real 404 for
+  // genuinely unmatched paths (Cloudflare's SPA fallback otherwise serves
+  // index.html with 200 OK for anything, a soft 404), and rewriting each
+  // known route's meta tags. Scoping this to an array of just the HTML
+  // routes was tried and rejected — empirically, any path NOT in that array
+  // stopped reaching the Worker at all, silently breaking the 404 fix for
+  // unlisted paths. The boolean form costs a small per-request overhead
+  // (every JS/CSS/image request also invokes the Worker) in exchange for
+  // both fixes actually working.
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true
   },
 
   // Audio masters live in R2 and are served via CDN (public read for streaming).

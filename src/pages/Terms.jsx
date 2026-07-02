@@ -6,10 +6,7 @@ import Section from '../components/LegalSection';
 // top is the part almost everyone needs; the full terms below exist for
 // anyone who wants the complete picture.
 export default function Terms() {
-  useDocumentHead({
-    title: 'Terms — Cadenzia',
-    description: 'The complete terms of service for Cadenzia, in plain English.',
-  });
+  useDocumentHead('/terms');
   return (
     <main className="page-enter mx-auto max-w-2xl px-6 py-20">
       <h1 className="text-h1 text-ink">Terms</h1>
