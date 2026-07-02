@@ -5,14 +5,12 @@ import { useDocumentHead } from '../hooks/useDocumentHead';
 import Artwork from '../components/Artwork';
 import Logo from '../components/Logo';
 import PlayCounter from '../components/PlayCounter';
+import EmailCapture from '../components/EmailCapture';
 
 // The landing page. It has three seconds to earn respect. Warm, sparse, and
 // confident — let the artwork and the space do the work.
 export default function Home() {
-  useDocumentHead({
-    title: 'Cadenzia — Find your cadence',
-    description: 'Curated audio engineered for deep concentration, flow state, and creative work.',
-  });
+  useDocumentHead('/');
   return (
     <main className="page-enter">
       <Hero />
@@ -114,6 +112,7 @@ function Footer() {
             </Link>
           ))}
         </div>
+        <EmailCapture compact />
         <p className="text-caption">© {new Date().getFullYear()} {APP_NAME}. No ads. No data sold.</p>
       </div>
     </footer>

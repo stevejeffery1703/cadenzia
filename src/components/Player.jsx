@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { getCategory } from '../utils/tracks';
-import { formatTime } from '../hooks/useAudio';
+import { getCategory, getTrack } from '../utils/tracks';
+import { formatTime, getLastTrackId } from '../hooks/useAudio';
 import { getDownloadLink } from '../utils/download';
 import { DOWNLOAD_EXPIRY_DAYS } from '../utils/config';
 import Artwork from './Artwork';
@@ -8,17 +8,27 @@ import Waveform from './Waveform';
 
 // The now-playing surface — large artwork, title, waveform, and the only
 // controls that matter. This is the product; nothing else competes with it.
-export default function Player({ audio, isSubscriber }) {
+export default function Player({ audio, isSubscriber, onResume }) {
   const { track } = audio;
   const [downloading, setDownloading] = useState(false);
 
   if (!track) {
+    const lastTrack = getTrack(getLastTrackId());
     return (
       <section className="flex min-h-[60vh] flex-col items-center justify-center text-center">
         <p className="text-h2 text-ink-soft">Choose something to begin.</p>
         <p className="mt-3 max-w-sm text-sm text-ink-faint">
           Put your headphones on. Pick a piece from the library and let the room go quiet.
         </p>
+        {lastTrack && (
+          <button
+            type="button"
+            onClick={() => onResume?.(lastTrack)}
+            className="btn-ghost mt-7"
+          >
+            Continue — {lastTrack.name}
+          </button>
+        )}
       </section>
     );
   }
@@ -59,7 +69,7 @@ export default function Player({ audio, isSubscriber }) {
             }
           }}
           disabled={downloading}
-          className="text-label mt-4 text-ink-faint transition-colors hover:text-ink-soft disabled:opacity-50"
+          className="text-label mt-4 text-ink-soft transition-colors hover:text-ink disabled:opacity-50"
         >
           {downloading ? 'Preparing…' : `Download · stays offline ${DOWNLOAD_EXPIRY_DAYS} days`}
         </button>
@@ -90,7 +100,7 @@ export default function Player({ audio, isSubscriber }) {
           onClick={audio.toggleLoop}
           aria-pressed={audio.loop}
           aria-label="Loop"
-          className={`transition-colors ${audio.loop ? 'text-accent' : 'text-ink-faint hover:text-ink-soft'}`}
+          className={`transition-colors ${audio.loop ? 'text-accent' : 'text-ink-soft hover:text-ink'}`}
         >
           <LoopIcon />
         </button>
@@ -108,7 +118,7 @@ export default function Player({ audio, isSubscriber }) {
           type="button"
           onClick={audio.skipNext}
           aria-label="Skip to next"
-          className="text-ink-faint transition-colors hover:text-ink-soft"
+          className="text-ink-soft transition-colors hover:text-ink"
         >
           <SkipIcon />
         </button>

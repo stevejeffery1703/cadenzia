@@ -51,8 +51,11 @@ export function useShare({ onUnlocked } = {}) {
               files = [card.file];
             }
           }
-        } catch {
-          /* card render failed — share without the image */
+        } catch (err) {
+          // Share still proceeds without the image — the honor-system unlock
+          // doesn't depend on it — but the artwork is the actual growth
+          // mechanism, so a silent failure here is worth knowing about.
+          console.error('[useShare] Share-card render failed, sharing without artwork:', err);
         }
         await navigator.share({
           title: APP_NAME,

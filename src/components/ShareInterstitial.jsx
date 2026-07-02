@@ -74,7 +74,7 @@ export default function ShareInterstitial({ open, track, onClose, onUnlocked, on
           </div>
         </div>
 
-        <button type="button" onClick={onClose} className="mt-8 text-label text-ink-faint hover:text-ink-soft">
+        <button type="button" onClick={onClose} className="mt-8 text-label text-ink-soft hover:text-ink">
           Not now
         </button>
       </div>

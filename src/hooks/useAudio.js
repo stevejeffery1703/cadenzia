@@ -19,6 +19,14 @@ import { APP_NAME, FADE_IN_SECONDS, CROSSFADE_SECONDS } from '../utils/config';
 
 const resolve = (src) => new URL(src, window.location.href).href;
 
+const LAST_TRACK_KEY = 'cad_last_track';
+
+// Read back where a returning visitor left off, so the player can offer to
+// resume instead of always starting from "Choose something to begin."
+export function getLastTrackId() {
+  return localStorage.getItem(LAST_TRACK_KEY) || null;
+}
+
 export function useAudio({ onTick, onSessionComplete, onTrackComplete } = {}) {
   const A = useRef(null); // graph: { ctx, analyser, master, chans, active }
   const [track, setTrack] = useState(null);
@@ -183,6 +191,7 @@ export function useAudio({ onTick, onSessionComplete, onTrackComplete } = {}) {
       if (resetSession) setElapsed(0);
       setPlaying(autoplay);
       updateMediaSession(nextTrack);
+      localStorage.setItem(LAST_TRACK_KEY, nextTrack.id);
     },
     [ensureGraph, playing, ramp, updateMediaSession]
   );
