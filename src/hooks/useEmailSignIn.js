@@ -11,6 +11,7 @@ export function useEmailSignIn({ onVerified } = {}) {
   const [step, setStep] = useState('email'); // 'email' | 'code'
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [resent, setResent] = useState(false);
 
   const sendCode = async (e) => {
     e?.preventDefault?.();
@@ -19,8 +20,31 @@ export function useEmailSignIn({ onVerified } = {}) {
     try {
       await signInWithEmail(email);
       setStep('code');
-    } catch {
-      setError('That did not go through. Check the address and try again.');
+    } catch (err) {
+      setError(
+        err.status === 429
+          ? "Too many attempts. Wait a few minutes, then try again."
+          : 'That did not go through. Check the address and try again.'
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resendCode = async () => {
+    setBusy(true);
+    setError(null);
+    setResent(false);
+    try {
+      await signInWithEmail(email);
+      setOtp('');
+      setResent(true);
+    } catch (err) {
+      setError(
+        err.status === 429
+          ? "Too many attempts. Wait a few minutes, then try again."
+          : 'That did not go through. Try again in a moment.'
+      );
     } finally {
       setBusy(false);
     }
@@ -44,7 +68,21 @@ export function useEmailSignIn({ onVerified } = {}) {
     setStep('email');
     setOtp('');
     setError(null);
+    setResent(false);
   };
 
-  return { email, setEmail, otp, setOtp, step, busy, error, sendCode, verifyCode, useDifferentEmail };
+  return {
+    email,
+    setEmail,
+    otp,
+    setOtp,
+    step,
+    busy,
+    error,
+    resent,
+    sendCode,
+    resendCode,
+    verifyCode,
+    useDifferentEmail,
+  };
 }

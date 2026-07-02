@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { signOut } from '../utils/auth';
 import { openBillingPortal } from '../utils/stripe';
 import { api } from '../utils/api';
@@ -9,12 +11,25 @@ import { PRICE } from '../utils/config';
 // Account. Minimal by design — sign in, subscription, history for subscribers,
 // and a plainly available way to delete everything.
 export default function Account({ subscription }) {
-  useDocumentHead({
-    title: 'Account — Cadenzia',
-    description: 'Sign in, manage your subscription, and control your data.',
-  });
+  useDocumentHead('/account');
   const { user, isSubscriber, refresh, sessionExpired } = subscription;
   const signIn = useEmailSignIn({ onVerified: refresh });
+  const [params, setParams] = useSearchParams();
+  const [justSubscribed, setJustSubscribed] = useState(false);
+
+  // Stripe redirects here after a successful checkout. The webhook that
+  // flips subscription_status may land a moment after this redirect, so the
+  // confirmation is driven by the param itself, not by isSubscriber yet
+  // being true — otherwise it'd flicker or never show on a slow webhook.
+  useEffect(() => {
+    if (params.get('checkout') === 'success') {
+      setJustSubscribed(true);
+      params.delete('checkout');
+      setParams(params, { replace: true });
+      refresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!user) {
     return (
@@ -43,7 +58,9 @@ export default function Account({ subscription }) {
         ) : (
           <form className="mt-8 space-y-3" onSubmit={signIn.verifyCode}>
             <p className="rounded-lg border border-line bg-paper-wash p-4 text-sm text-ink-soft">
-              A 6-digit code is on its way to {signIn.email}. It expires in 10 minutes.
+              {signIn.resent
+                ? `A new code is on its way to ${signIn.email}. It expires in 10 minutes.`
+                : `A 6-digit code is on its way to ${signIn.email}. It expires in 10 minutes.`}
             </p>
             <input
               type="text"
@@ -58,13 +75,14 @@ export default function Account({ subscription }) {
             <button className="btn-primary w-full" disabled={signIn.busy}>
               {signIn.busy ? 'Checking…' : 'Continue'}
             </button>
-            <button
-              type="button"
-              onClick={signIn.useDifferentEmail}
-              className="w-full text-center text-sm text-ink-soft hover:text-ink"
-            >
-              Use a different email
-            </button>
+            <div className="flex justify-center gap-4 text-sm">
+              <button type="button" onClick={signIn.resendCode} disabled={signIn.busy} className="text-ink-soft hover:text-ink">
+                Resend code
+              </button>
+              <button type="button" onClick={signIn.useDifferentEmail} className="text-ink-soft hover:text-ink">
+                Use a different email
+              </button>
+            </div>
           </form>
         )}
 
@@ -75,6 +93,11 @@ export default function Account({ subscription }) {
 
   return (
     <main className="page-enter mx-auto max-w-3xl px-6 py-16">
+      {justSubscribed && (
+        <p className="mb-8 rounded-lg border border-line bg-paper-wash p-4 text-sm text-ink-soft">
+          Thank you — you're subscribed. Every track, no hourly pause.
+        </p>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-h1 text-ink">Account</h1>

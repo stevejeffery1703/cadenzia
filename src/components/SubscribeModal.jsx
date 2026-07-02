@@ -80,7 +80,9 @@ export default function SubscribeModal({ open, onClose }) {
         ) : (
           <form className="mt-6 space-y-3" onSubmit={signIn.verifyCode}>
             <p className="rounded-lg border border-line bg-paper-wash p-4 text-sm text-ink-soft">
-              A 6-digit code is on its way to {signIn.email}. Open it, then enter it below.
+              {signIn.resent
+                ? `A new code is on its way to ${signIn.email}.`
+                : `A 6-digit code is on its way to ${signIn.email}. Open it, then enter it below.`}
             </p>
             <input
               type="text"
@@ -95,13 +97,14 @@ export default function SubscribeModal({ open, onClose }) {
             <button type="submit" disabled={busy} className="btn-primary w-full disabled:opacity-50">
               {busy ? 'One moment…' : 'Continue to checkout'}
             </button>
-            <button
-              type="button"
-              onClick={signIn.useDifferentEmail}
-              className="w-full text-center text-sm text-ink-soft hover:text-ink"
-            >
-              Use a different email
-            </button>
+            <div className="flex justify-center gap-4 text-sm">
+              <button type="button" onClick={signIn.resendCode} disabled={busy} className="text-ink-soft hover:text-ink">
+                Resend code
+              </button>
+              <button type="button" onClick={signIn.useDifferentEmail} className="text-ink-soft hover:text-ink">
+                Use a different email
+              </button>
+            </div>
           </form>
         )}
 
