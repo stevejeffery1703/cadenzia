@@ -1,48 +1,74 @@
-import { useState } from 'react';
-import { signInWithEmail, signOut } from '../utils/auth';
+import { signOut } from '../utils/auth';
 import { openBillingPortal } from '../utils/stripe';
 import { api } from '../utils/api';
+import { useEmailSignIn } from '../hooks/useEmailSignIn';
+import { useDocumentHead } from '../hooks/useDocumentHead';
 import StatsPanel from '../components/StatsPanel';
 import { PRICE } from '../utils/config';
 
 // Account. Minimal by design — sign in, subscription, history for subscribers,
 // and a plainly available way to delete everything.
 export default function Account({ subscription }) {
-  const { user, isSubscriber, refresh } = subscription;
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
+  useDocumentHead({
+    title: 'Account — Cadenzia',
+    description: 'Sign in, manage your subscription, and control your data.',
+  });
+  const { user, isSubscriber, refresh, sessionExpired } = subscription;
+  const signIn = useEmailSignIn({ onVerified: refresh });
 
   if (!user) {
     return (
       <main className="page-enter mx-auto max-w-md px-6 py-24">
         <h1 className="text-h1 text-ink">Sign in</h1>
         <p className="mt-3 text-sm text-ink-soft">
-          We send a one-time link. There is no password to remember.
+          {sessionExpired
+            ? "Your session expired. Sign in again to continue — there's no password to remember."
+            : 'We send a one-time code. There is no password to remember.'}
         </p>
-        {sent ? (
-          <p className="mt-8 rounded-lg border border-line bg-paper-wash p-4 text-sm text-ink-soft">
-            A sign-in link is on its way. Check your inbox.
-          </p>
-        ) : (
-          <form
-            className="mt-8 space-y-3"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              await signInWithEmail(email);
-              setSent(true);
-            }}
-          >
+
+        {signIn.step === 'email' ? (
+          <form className="mt-8 space-y-3" onSubmit={signIn.sendCode}>
             <input
               type="email"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={signIn.email}
+              onChange={(e) => signIn.setEmail(e.target.value)}
               placeholder="you@example.com"
               className="w-full rounded-full border border-line bg-paper-raised px-4 py-3 text-ink placeholder:text-ink-faint focus:border-accent"
             />
-            <button className="btn-primary w-full">Send sign-in link</button>
+            <button className="btn-primary w-full" disabled={signIn.busy}>
+              {signIn.busy ? 'Sending…' : 'Send sign-in code'}
+            </button>
+          </form>
+        ) : (
+          <form className="mt-8 space-y-3" onSubmit={signIn.verifyCode}>
+            <p className="rounded-lg border border-line bg-paper-wash p-4 text-sm text-ink-soft">
+              A 6-digit code is on its way to {signIn.email}. It expires in 10 minutes.
+            </p>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              value={signIn.otp}
+              onChange={(e) => signIn.setOtp(e.target.value)}
+              placeholder="123456"
+              className="w-full rounded-full border border-line bg-paper-raised px-4 py-3 text-center tracking-[0.3em] text-ink placeholder:text-ink-faint focus:border-accent"
+            />
+            <button className="btn-primary w-full" disabled={signIn.busy}>
+              {signIn.busy ? 'Checking…' : 'Continue'}
+            </button>
+            <button
+              type="button"
+              onClick={signIn.useDifferentEmail}
+              className="w-full text-center text-sm text-ink-soft hover:text-ink"
+            >
+              Use a different email
+            </button>
           </form>
         )}
+
+        {signIn.error && <p className="mt-3 text-sm text-warm">{signIn.error}</p>}
       </main>
     );
   }

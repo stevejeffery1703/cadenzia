@@ -1,37 +1,35 @@
 import { useState } from 'react';
 import { startCheckout } from '../utils/stripe';
-import { signInWithEmail } from '../utils/auth';
 import { getToken } from '../utils/api';
+import { useEmailSignIn } from '../hooks/useEmailSignIn';
 import { PRICE, APP_NAME, DOWNLOAD_EXPIRY_DAYS } from '../utils/config';
 
 // The paid tier, presented quietly. No card fields here — the Worker creates a
 // Stripe Checkout Session and we hand off to Stripe's secure page. If the listener
-// is not signed in yet, we take an email and send a sign-in link first.
+// is not signed in yet, we take an email, verify a one-time code, then continue
+// straight to checkout.
 export default function SubscribeModal({ open, onClose }) {
-  const [email, setEmail] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [sentLink, setSentLink] = useState(false);
-  const [error, setError] = useState(null);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [checkoutError, setCheckoutError] = useState(null);
+
+  async function goToCheckout() {
+    setCheckoutBusy(true);
+    setCheckoutError(null);
+    try {
+      await startCheckout();
+    } catch {
+      setCheckoutError('That did not go through. Please try again in a moment.');
+    } finally {
+      setCheckoutBusy(false);
+    }
+  }
+
+  const signIn = useEmailSignIn({ onVerified: goToCheckout });
   if (!open) return null;
 
   const signedIn = !!getToken();
-
-  const go = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      if (!signedIn) {
-        await signInWithEmail(email);
-        setSentLink(true);
-      } else {
-        await startCheckout();
-      }
-    } catch (e) {
-      setError('That did not go through. Please try again in a moment.');
-    } finally {
-      setBusy(false);
-    }
-  };
+  const busy = signIn.busy || checkoutBusy;
+  const error = signIn.error || checkoutError;
 
   return (
     <div
@@ -56,31 +54,55 @@ export default function SubscribeModal({ open, onClose }) {
           <span className="text-ink-soft">/ month</span>
         </div>
 
-        {sentLink ? (
-          <p className="mt-6 rounded-lg border border-line bg-paper-wash p-4 text-sm text-ink-soft">
-            A sign-in link is on its way to {email}. Open it, then return here to finish.
-          </p>
+        {signedIn ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={goToCheckout}
+            className="btn-primary mt-6 w-full disabled:opacity-50"
+          >
+            {busy ? 'One moment…' : 'Continue to checkout'}
+          </button>
+        ) : signIn.step === 'email' ? (
+          <form className="mt-6 space-y-3" onSubmit={signIn.sendCode}>
+            <input
+              type="email"
+              required
+              value={signIn.email}
+              onChange={(e) => signIn.setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full rounded-lg border border-line bg-paper-raised px-4 py-3 text-ink placeholder:text-ink-faint focus:border-accent"
+            />
+            <button type="submit" disabled={busy || !signIn.email} className="btn-primary w-full disabled:opacity-50">
+              {busy ? 'One moment…' : 'Continue'}
+            </button>
+          </form>
         ) : (
-          <div className="mt-6 space-y-3">
-            {!signedIn && (
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full rounded-lg border border-line bg-paper-raised px-4 py-3 text-ink placeholder:text-ink-faint focus:border-accent"
-              />
-            )}
+          <form className="mt-6 space-y-3" onSubmit={signIn.verifyCode}>
+            <p className="rounded-lg border border-line bg-paper-wash p-4 text-sm text-ink-soft">
+              A 6-digit code is on its way to {signIn.email}. Open it, then enter it below.
+            </p>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              value={signIn.otp}
+              onChange={(e) => signIn.setOtp(e.target.value)}
+              placeholder="123456"
+              className="w-full rounded-lg border border-line bg-paper-raised px-4 py-3 text-center tracking-[0.3em] text-ink placeholder:text-ink-faint focus:border-accent"
+            />
+            <button type="submit" disabled={busy} className="btn-primary w-full disabled:opacity-50">
+              {busy ? 'One moment…' : 'Continue to checkout'}
+            </button>
             <button
               type="button"
-              disabled={busy || (!signedIn && !email)}
-              onClick={go}
-              className="btn-primary w-full disabled:opacity-50"
+              onClick={signIn.useDifferentEmail}
+              className="w-full text-center text-sm text-ink-soft hover:text-ink"
             >
-              {busy ? 'One moment…' : signedIn ? 'Continue to checkout' : 'Continue'}
+              Use a different email
             </button>
-          </div>
+          </form>
         )}
 
         {error && <p className="mt-3 text-sm text-warm">{error}</p>}

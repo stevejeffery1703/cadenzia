@@ -89,7 +89,13 @@ export async function webhook(request, env) {
   const obj = event.data.object;
 
   switch (event.type) {
-    case 'checkout.session.completed':
+    // Deliberately NOT handling checkout.session.completed here: its object is
+    // a Checkout Session, not a Subscription — .status is 'complete'/'open'/
+    // 'expired' (never 'active') and it has no current_period_end, so treating
+    // it like a subscription event would (and did) incorrectly write 'free'
+    // for a customer who just paid. customer.subscription.created always
+    // fires alongside a successful subscription checkout and carries the
+    // correctly-shaped object, so it's the sole source of truth here.
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
       const customerId = obj.customer;

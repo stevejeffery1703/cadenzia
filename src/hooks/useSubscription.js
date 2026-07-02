@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getMe } from '../utils/auth';
-import { getToken } from '../utils/api';
+import { getToken, setToken } from '../utils/api';
 
 // Resolves the current user's subscription status from the Worker, which checks
 // D1 (kept in sync by the Stripe webhook). Anonymous users are simply
@@ -9,6 +9,10 @@ export function useSubscription() {
   const [user, setUser] = useState(null);
   const [status, setStatus] = useState('free'); // 'free' | 'active' | 'loading'
   const [loading, setLoading] = useState(true);
+  // True only when a *previously valid* session died (expired/invalid JWT) —
+  // distinct from a visitor who never signed in, so the UI can explain what
+  // happened instead of silently reverting to "free" as if nothing changed.
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!getToken()) {
@@ -22,7 +26,12 @@ export function useSubscription() {
       const me = await getMe();
       setUser(me);
       setStatus(me && me.subscription_status === 'active' ? 'active' : 'free');
-    } catch {
+      setSessionExpired(false);
+    } catch (err) {
+      if (err.status === 401) {
+        setToken(null); // dead token — stop retrying with it
+        setSessionExpired(true);
+      }
       setUser(null);
       setStatus('free');
     } finally {
@@ -39,6 +48,7 @@ export function useSubscription() {
     isSubscriber: status === 'active',
     status,
     loading,
+    sessionExpired,
     refresh,
   };
 }
