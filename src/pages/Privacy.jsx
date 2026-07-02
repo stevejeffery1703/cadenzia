@@ -1,8 +1,13 @@
 import { APP_NAME } from '../utils/config';
+import { useDocumentHead } from '../hooks/useDocumentHead';
 import Section from '../components/LegalSection';
 
 // Plain English. Short. Honest. Privacy is a feature, not a policy.
 export default function Privacy() {
+  useDocumentHead({
+    title: 'Privacy — Cadenzia',
+    description: 'What Cadenzia stores, what it never does, and how to delete your data.',
+  });
   return (
     <main className="page-enter mx-auto max-w-2xl px-6 py-20">
       <h1 className="text-h1 text-ink">Privacy</h1>

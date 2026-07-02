@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { getCategory } from '../utils/tracks';
 import { APP_NAME, PRICE, DOWNLOAD_EXPIRY_DAYS } from '../utils/config';
+import { useDocumentHead } from '../hooks/useDocumentHead';
 import Artwork from '../components/Artwork';
 import Logo from '../components/Logo';
 import PlayCounter from '../components/PlayCounter';
@@ -8,6 +9,10 @@ import PlayCounter from '../components/PlayCounter';
 // The landing page. It has three seconds to earn respect. Warm, sparse, and
 // confident — let the artwork and the space do the work.
 export default function Home() {
+  useDocumentHead({
+    title: 'Cadenzia — Find your cadence',
+    description: 'Curated audio engineered for deep concentration, flow state, and creative work.',
+  });
   return (
     <main className="page-enter">
       <Hero />

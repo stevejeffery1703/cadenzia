@@ -38,7 +38,7 @@ export default function Player({ audio, isSubscriber }) {
       </div>
 
       <p className="text-label mt-8 text-accent">{category?.name}</p>
-      <h1 className="text-track mt-2 text-3xl text-ink">{track.name}</h1>
+      <h2 className="text-track mt-2 text-3xl text-ink">{track.name}</h2>
       <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-soft">{track.description}</p>
 
       {isSubscriber && (

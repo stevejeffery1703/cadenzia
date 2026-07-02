@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useDocumentHead } from '../hooks/useDocumentHead';
 import Logo from '../components/Logo';
 
 // Quiet, not apologetic. The same warmth as everywhere else on the site.
 export default function NotFound() {
+  useDocumentHead({ title: 'Page not found — Cadenzia' });
   return (
     <main className="page-enter mx-auto flex min-h-[70vh] max-w-content flex-col items-center justify-center px-6 text-center">
       <Logo size={40} className="mb-6" />

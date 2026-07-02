@@ -14,6 +14,10 @@ import * as email from './routes/email.js';
 import * as plays from './routes/plays.js';
 import * as sessions from './routes/sessions.js';
 
+// The app's real client-side routes — used to tell a genuine soft-404 apart
+// from a valid SPA route when both get served the same index.html shell.
+const KNOWN_ROUTES = new Set(['/', '/app', '/science', '/privacy', '/terms', '/account']);
+
 // Stripe webhook needs the raw body, so it's matched before JSON parsing.
 const ROUTES = {
   'POST /api/auth/magic-link': auth.magicLink,
@@ -66,9 +70,24 @@ export default {
     }
 
     // Everything else → static assets (SPA fallback handled by wrangler config).
-    return env.ASSETS.fetch(request);
+    return serveStaticOrNotFound(request, url, env);
   },
 };
+
+// Cloudflare's SPA fallback (wrangler.jsonc's `not_found_handling`) serves
+// index.html with a 200 for ANY unmatched path — a soft 404 that wastes crawl
+// budget and can get garbage URLs indexed. If what comes back is the HTML
+// shell for a path that isn't one of our real routes, report a genuine 404
+// while still returning the shell, so the client router still renders its
+// own NotFound page for the human visitor.
+async function serveStaticOrNotFound(request, url, env) {
+  const response = await env.ASSETS.fetch(request);
+  const isHtmlShell = (response.headers.get('content-type') || '').includes('text/html');
+  if (isHtmlShell && !KNOWN_ROUTES.has(url.pathname)) {
+    return new Response(response.body, { status: 404, headers: response.headers });
+  }
+  return response;
+}
 
 async function serveAudio(url, env) {
   const objectKey = decodeURIComponent(url.pathname.replace('/audio/', ''));

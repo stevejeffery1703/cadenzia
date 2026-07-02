@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getCategory } from '../utils/tracks';
+import { APP_NAME } from '../utils/config';
 import { useAudio, formatTime } from '../hooks/useAudio';
 import { useSession } from '../hooks/useSession';
 import { recordPlay } from '../utils/plays';
 import { recordSession } from '../utils/sessions';
+import { useDocumentHead } from '../hooks/useDocumentHead';
 import Library from '../components/Library';
 import Player from '../components/Player';
 import ShareInterstitial from '../components/ShareInterstitial';
@@ -14,6 +16,10 @@ import SubscribeModal from '../components/SubscribeModal';
 // right. The one-hour free gate surfaces as a calm interstitial — never a wall,
 // never mid-track beyond the natural pause.
 export default function AppPage({ subscription }) {
+  useDocumentHead({
+    title: 'Listen — Cadenzia',
+    description: 'Stream deep focus, flow state, and creative-thinking audio — free for the first hour of every session.',
+  });
   const { isSubscriber, user } = subscription;
   const [showGate, setShowGate] = useState(false);
   const [showSubscribe, setShowSubscribe] = useState(false);
@@ -68,6 +74,10 @@ export default function AppPage({ subscription }) {
 
   return (
     <main className="page-enter mx-auto max-w-content px-6 pb-28 pt-8 lg:pb-12">
+      {/* Stable page identity — the visible content is the artwork/player, not
+          a heading, but the page still needs one real h1 that doesn't change
+          every time a track is picked or skipped (see Player.jsx's h2). */}
+      <h1 className="sr-only">Listen — {APP_NAME}</h1>
       <div className="grid gap-10 lg:grid-cols-[300px_1fr_260px]">
         {/* Library — left on desktop, bottom sheet on mobile. */}
         <aside className="hidden lg:block">

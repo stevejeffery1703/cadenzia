@@ -1,10 +1,15 @@
 import { APP_NAME, PRICE } from '../utils/config';
+import { useDocumentHead } from '../hooks/useDocumentHead';
 import Section from '../components/LegalSection';
 
 // Same voice as Privacy — plain English, short sentences. The summary at the
 // top is the part almost everyone needs; the full terms below exist for
 // anyone who wants the complete picture.
 export default function Terms() {
+  useDocumentHead({
+    title: 'Terms — Cadenzia',
+    description: 'The complete terms of service for Cadenzia, in plain English.',
+  });
   return (
     <main className="page-enter mx-auto max-w-2xl px-6 py-20">
       <h1 className="text-h1 text-ink">Terms</h1>
