@@ -12,6 +12,7 @@ import * as share from './routes/share.js';
 import * as download from './routes/download.js';
 import * as email from './routes/email.js';
 import * as plays from './routes/plays.js';
+import * as sessions from './routes/sessions.js';
 
 // Stripe webhook needs the raw body, so it's matched before JSON parsing.
 const ROUTES = {
@@ -29,6 +30,8 @@ const ROUTES = {
 
   'POST /api/plays/increment': plays.increment,
   'GET /api/plays/count': plays.count,
+
+  'POST /api/sessions/record': sessions.record,
 
   'POST /api/download/link': download.link,
 
@@ -55,6 +58,9 @@ export default {
       try {
         return await handler(request, env, ctx);
       } catch (err) {
+        // Surfaces in `wrangler tail` / the Cloudflare dashboard's Worker Logs —
+        // the only observability we have without a third-party service.
+        console.error(`[${key}] ${err.stack || err}`);
         return json({ error: err.message || 'Server error' }, { status: 500, env });
       }
     }

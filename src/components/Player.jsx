@@ -1,12 +1,16 @@
+import { useState } from 'react';
 import { getCategory } from '../utils/tracks';
 import { formatTime } from '../hooks/useAudio';
+import { getDownloadLink } from '../utils/download';
+import { DOWNLOAD_EXPIRY_DAYS } from '../utils/config';
 import Artwork from './Artwork';
 import Waveform from './Waveform';
 
 // The now-playing surface — large artwork, title, waveform, and the only
 // controls that matter. This is the product; nothing else competes with it.
-export default function Player({ audio }) {
+export default function Player({ audio, isSubscriber }) {
   const { track } = audio;
+  const [downloading, setDownloading] = useState(false);
 
   if (!track) {
     return (
@@ -36,6 +40,30 @@ export default function Player({ audio }) {
       <p className="text-label mt-8 text-accent">{category?.name}</p>
       <h1 className="text-track mt-2 text-3xl text-ink">{track.name}</h1>
       <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-soft">{track.description}</p>
+
+      {isSubscriber && (
+        <button
+          type="button"
+          onClick={async () => {
+            setDownloading(true);
+            try {
+              const url = await getDownloadLink(track.id);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${track.name}.mp3`;
+              a.click();
+            } catch {
+              /* signed link failed — quietly do nothing rather than alarm mid-session */
+            } finally {
+              setDownloading(false);
+            }
+          }}
+          disabled={downloading}
+          className="text-label mt-4 text-ink-faint transition-colors hover:text-ink-soft disabled:opacity-50"
+        >
+          {downloading ? 'Preparing…' : `Download · stays offline ${DOWNLOAD_EXPIRY_DAYS} days`}
+        </button>
+      )}
 
       <div className="mt-7 h-12 w-full max-w-md">
         <Waveform getAnalyser={audio.analyser} playing={audio.playing} />

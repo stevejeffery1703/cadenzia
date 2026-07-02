@@ -6,6 +6,12 @@
   "compatibility_date": "2024-09-23",
   "compatibility_flags": ["nodejs_compat"],
 
+  // Persists console.error/log output so failed requests are queryable in the
+  // dashboard after the fact, not just visible while `wrangler tail` is running.
+  "observability": {
+    "enabled": true
+  },
+
   // Serve the Vite build output as static assets.
   "assets": {
     "directory": "./dist",

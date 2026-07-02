@@ -1,4 +1,5 @@
 import { APP_NAME } from '../utils/config';
+import Section from '../components/LegalSection';
 
 // Plain English. Short. Honest. Privacy is a feature, not a policy.
 export default function Privacy() {
@@ -32,14 +33,5 @@ export default function Privacy() {
         unsubscribe.
       </Section>
     </main>
-  );
-}
-
-function Section({ title, children }) {
-  return (
-    <div className="mt-10">
-      <h2 className="text-label text-ink-soft">{title}</h2>
-      <p className="mt-2 leading-relaxed text-ink-soft">{children}</p>
-    </div>
   );
 }

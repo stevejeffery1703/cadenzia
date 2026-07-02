@@ -6,6 +6,8 @@ import AppPage from './pages/AppPage';
 import Science from './pages/Science';
 import Account from './pages/Account';
 import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import NotFound from './pages/NotFound';
 import { useSubscription } from './hooks/useSubscription';
 
 export default function App() {
@@ -23,6 +25,8 @@ export default function App() {
         <Route path="/science" element={<Science />} />
         <Route path="/account" element={<Account subscription={subscription} />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

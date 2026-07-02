@@ -4,6 +4,7 @@ import { getCategory } from '../utils/tracks';
 import { useAudio, formatTime } from '../hooks/useAudio';
 import { useSession } from '../hooks/useSession';
 import { recordPlay } from '../utils/plays';
+import { recordSession } from '../utils/sessions';
 import Library from '../components/Library';
 import Player from '../components/Player';
 import ShareInterstitial from '../components/ShareInterstitial';
@@ -13,7 +14,7 @@ import SubscribeModal from '../components/SubscribeModal';
 // right. The one-hour free gate surfaces as a calm interstitial — never a wall,
 // never mid-track beyond the natural pause.
 export default function AppPage({ subscription }) {
-  const { isSubscriber } = subscription;
+  const { isSubscriber, user } = subscription;
   const [showGate, setShowGate] = useState(false);
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -25,7 +26,16 @@ export default function AppPage({ subscription }) {
     onTick: () => {
       if (!isSubscriber) session.addSecond();
     },
-    onTrackComplete: () => recordPlay(),
+    onTrackComplete: (track) => {
+      recordPlay();
+      if (user) {
+        recordSession({
+          trackId: track.id,
+          trackName: track.name,
+          durationSeconds: track.durationSeconds,
+        });
+      }
+    },
   });
 
   // Deep link ?subscribe=1 opens checkout (from nav + pricing CTAs).
@@ -64,7 +74,7 @@ export default function AppPage({ subscription }) {
           <Library currentTrackId={audio.track?.id} onPlay={handlePlay} />
         </aside>
 
-        <Player audio={audio} />
+        <Player audio={audio} isSubscriber={isSubscriber} />
 
         {/* Session — right on desktop only. */}
         <aside className="hidden lg:block">

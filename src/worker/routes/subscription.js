@@ -3,7 +3,7 @@
 //   POST /api/subscription/portal   → creates a Billing Portal session
 //   POST /api/subscription/webhook  → Stripe events → update D1
 //
-// We never collect card details — Stripe's hosted Checkout does. $1.99/month
+// We never collect card details — Stripe's hosted Checkout does. $2.99/month
 // recurring price is STRIPE_PRICE_ID.
 
 import { json } from '../middleware/cors.js';

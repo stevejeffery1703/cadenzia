@@ -63,3 +63,25 @@ export async function getPlayCount(env) {
   const row = await env.DB.prepare('SELECT count FROM play_counter WHERE id = 1').first();
   return row?.count ?? 0;
 }
+
+// Subscriber stats panel — hours listened, session count, and the track with
+// the most cumulative listening time. Two queries (not a single GROUP BY) so
+// "sessions" counts every row, including tracks with no name recorded.
+export async function getListeningStats(env, userId) {
+  const totals = await env.DB.prepare(
+    `SELECT COUNT(*) AS sessions, COALESCE(SUM(duration_seconds), 0) AS totalSeconds
+     FROM listening_sessions WHERE user_id = ?`
+  ).bind(userId).first();
+
+  const favourite = await env.DB.prepare(
+    `SELECT track_name, SUM(duration_seconds) AS total FROM listening_sessions
+     WHERE user_id = ? AND track_name IS NOT NULL
+     GROUP BY track_name ORDER BY total DESC LIMIT 1`
+  ).bind(userId).first();
+
+  return {
+    hours: Math.round(((totals?.totalSeconds || 0) / 3600) * 10) / 10,
+    sessions: totals?.sessions || 0,
+    favourite: favourite?.track_name || null,
+  };
+}

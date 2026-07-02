@@ -101,6 +101,7 @@ function Footer() {
           {[
             ['/science', 'Science'],
             ['/privacy', 'Privacy'],
+            ['/terms', 'Terms'],
             ['/account', 'Account'],
           ].map(([to, label]) => (
             <Link key={to} to={to} className="text-label text-ink-soft hover:text-ink">
