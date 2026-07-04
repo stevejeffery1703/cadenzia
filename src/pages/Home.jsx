@@ -38,7 +38,7 @@ function Hero() {
 
 function Previews() {
   // Three categories, artwork forward. Let the work speak; no feature lists.
-  const featured = ['deep-focus', 'flow-state', 'restoration'].map(getCategory);
+  const featured = ['deep-focus', 'creativity', 'calm'].map(getCategory);
   return (
     <section className="mx-auto max-w-content px-6 py-20">
       <div className="grid gap-8 sm:grid-cols-3">

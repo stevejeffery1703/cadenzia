@@ -1,8 +1,8 @@
 # Cadenzia
 
-Premium focus music for serious knowledge workers. Curated audio — binaural
-beats, ambient compositions, and rhythmic soundscapes — engineered for deep
-concentration, flow state, and creative thinking. Dark, sparse, and considered.
+Premium focus music for serious knowledge workers. Curated instrumental audio —
+ambient compositions and rhythmic soundscapes — engineered to stay out of your
+way: no words, nothing sudden, a steady floor that masks distraction.
 
 > The name comes from *cadenza*: the virtuoso passage where a performer reaches
 > their peak. The product name is centralised in
@@ -39,18 +39,18 @@ A warm, editorial, **light** aesthetic — gallery paper, not a dark app.
   Cormorant/Inter default. Scale lives in `global.css` (`.text-display`, `.text-h1`…).
 - **Mark** — a monoline note whose flag flows into a sound wave
   ([`src/components/Logo.jsx`](src/components/Logo.jsx)); note-head in ink, wave in pine.
-- **Artwork** — fine ink line-work on warm paper (depth contours, a flowing wave,
-  scattered notes, candlelight washes, a music staff). Engraving, not gradient blobs.
+- **Artwork** — fine ink line-work on warm paper (depth contours, scattered notes,
+  candlelight washes, a music staff). Engraving, not gradient blobs.
 - **Voice** — sparse, confident, sentence case, no hype words, no emoji.
 
 ## What's built
 
-- **Five categories, 25 tracks** ([`src/utils/tracks.js`](src/utils/tracks.js)):
-  Deep Focus, Flow State, Creative Thinking, Restoration, Activation — each mapped
-  to one of five generative artwork languages.
+- **Four categories, 20 tracks** ([`src/utils/tracks.js`](src/utils/tracks.js)):
+  Deep Focus, Energy, Creativity, Calm — each mapped to one of four generative
+  artwork languages.
 - **Generative artwork** ([`src/utils/artwork.js`](src/utils/artwork.js)) —
-  deterministic SVG seeded by track id (deep water, gold thread, constellation,
-  candlelight, abstracted score), one slow ambient animation, reduced-motion aware.
+  deterministic SVG seeded by track id (deep water, abstracted score, constellation,
+  candlelight), one slow ambient animation, reduced-motion aware.
   Rendered to PNG for share cards.
 - **Player** — Web Audio engine ([`src/hooks/useAudio.js`](src/hooks/useAudio.js))
   with 2s fade-in, 3s crossfade, auto-advance, analyser-driven waveform; large
@@ -70,9 +70,9 @@ A warm, editorial, **light** aesthetic — gallery paper, not a dark app.
 - Landing, Science, Account (no gamification), plain-English Privacy. PWA.
 
 > Audio files are **placeholders** — `tracks.js` points at `/audio/<id>.mp3`.
-> Generate real masters embedding the right binaural frequency per category and
-> upload them to the R2 bucket. Until then the player UI works but playback is
-> silent / 404s (handled gracefully).
+> Generate real instrumental masters suited to each category and upload them to
+> the R2 bucket. Until then the player UI works but playback is silent / 404s
+> (handled gracefully).
 
 ## Local development
 

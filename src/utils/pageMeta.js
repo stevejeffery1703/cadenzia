@@ -7,17 +7,17 @@
 export const PAGE_META = {
   '/': {
     title: 'Cadenzia — Find your cadence',
-    description: 'Curated audio engineered for deep concentration, flow state, and creative work.',
+    description: 'Curated instrumental audio for deep focus, energy, creativity, and calm.',
   },
   '/app': {
     title: 'Listen — Cadenzia',
     description:
-      'Stream deep focus, flow state, and creative-thinking audio — free for the first hour of every session.',
+      'Stream deep focus, energy, creativity, and calm audio — free for the first hour of every session.',
   },
   '/science': {
     title: 'The science, plainly — Cadenzia',
     description:
-      'How binaural beats and brainwave entrainment work, explained simply, with cited research and a frequency guide.',
+      'How Cadenzia is made to hold your attention — instrumental, steady, and distraction-masking — with the research behind it.',
   },
   '/privacy': {
     title: 'Privacy — Cadenzia',

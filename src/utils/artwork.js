@@ -4,13 +4,12 @@
 // from its `seed` (the track id) — always identical for a given track, never
 // hand-drawn. The language is fine ink line-work on warm paper, like an engraving
 // or a page of liner notes, and it carries the brand motif throughout: notes,
-// sound waves, and wavy lines. Five visual languages, one per category:
+// sound waves, and wavy lines. Four visual languages, one per category:
 //
-//   depth        Deep Focus        — concentric depth contours over a warm glow
-//   thread       Flow State        — one continuous flowing wave
-//   constellation Creative Thinking — scattered notes connected by thin arcs
-//   candlelight  Restoration       — diffuse warm washes, barely a line
-//   score        Activation        — precise staff lines, a score abstracted
+//   depth         Deep Focus  — concentric depth contours over a warm glow
+//   score         Energy      — precise staff lines, a score abstracted
+//   constellation Creativity  — scattered notes connected by thin arcs
+//   candlelight   Calm        — diffuse warm washes, barely a line
 //
 // Output is an SVG string. The same string powers the on-screen artwork and the
 // PNG rendered into share cards, so palette values are inlined (no CSS vars).
@@ -51,7 +50,7 @@ const round = (n) => Math.round(n * 100) / 100;
 function depth(rng, W, H, animate) {
   const cx = round(W * (0.42 + rng() * 0.16));
   const cy = round(H * (0.54 + rng() * 0.14));
-  const rings = 13 + Math.floor(rng() * 5);
+  const rings = 16 + Math.floor(rng() * 6);
   const maxR = W * 0.64;
 
   const lines = [];
@@ -70,14 +69,14 @@ function depth(rng, W, H, animate) {
       const y = round(cy + Math.sin(ang) * r * 0.9);
       d += `${j === 0 ? 'M' : 'L'} ${x} ${y} `;
     }
-    const op = round(0.05 + (1 - t) * 0.32);
+    const op = round(0.06 + (1 - t) * 0.4);
     lines.push(
       `<path d="${d}Z" fill="none" stroke="${PALETTE.ink}" stroke-width="${round(0.5 + (1 - t) * 0.5)}" opacity="${op}"/>`
     );
   }
 
   const drift = animate
-    ? `<animateTransform attributeName="transform" type="translate" values="0 0; 0 ${round(H * 0.012)}; 0 0" dur="50s" repeatCount="indefinite"/>`
+    ? `<animateTransform attributeName="transform" type="translate" values="0 0; 0 ${round(H * 0.012)}; 0 0" dur="58s" repeatCount="indefinite"/>`
     : '';
 
   return {
@@ -90,42 +89,9 @@ function depth(rng, W, H, animate) {
   };
 }
 
-function thread(rng, W, H, animate) {
-  const midY = H * (0.4 + rng() * 0.2);
-  const amp = H * (0.12 + rng() * 0.1);
-  const segs = 3 + Math.floor(rng() * 2);
-
-  const wave = (offY, a) => {
-    const step = (W * 1.12) / segs;
-    let x = -W * 0.06;
-    let d = `M ${round(x)} ${round(midY + offY)}`;
-    for (let i = 0; i < segs; i++) {
-      const cxp = x + step / 2;
-      const cyp = midY + offY + (i % 2 === 0 ? -a : a) * 2;
-      const nx = x + step;
-      d += ` Q ${round(cxp)} ${round(cyp)} ${round(nx)} ${round(midY + offY)}`;
-      x = nx;
-    }
-    return d;
-  };
-
-  const drift = animate
-    ? `<animateTransform attributeName="transform" type="translate" values="0 0; 0 ${round(H * 0.02)}; 0 0" dur="40s" repeatCount="indefinite"/>`
-    : '';
-
-  return {
-    defs: '',
-    body: `      <g>${drift}
-        <path d="${wave(H * 0.07, amp * 0.8)}" fill="none" stroke="${PALETTE.ink}" stroke-width="1" opacity="0.12"/>
-        <path d="${wave(-H * 0.06, amp * 0.9)}" fill="none" stroke="${PALETTE.warm}" stroke-width="1.2" opacity="0.22"/>
-        <path d="${wave(0, amp)}" fill="none" stroke="${PALETTE.accent}" stroke-width="${round(2.2 + rng())}" stroke-linecap="round"/>
-      </g>`,
-  };
-}
-
 function constellation(rng, W, H, animate) {
-  const n = 9 + Math.floor(rng() * 5);
-  const pad = W * 0.14;
+  const n = 7 + Math.floor(rng() * 4);
+  const pad = W * 0.17;
   const pts = Array.from({ length: n }, () => ({
     x: round(pad + rng() * (W - pad * 2)),
     y: round(pad + rng() * (H - pad * 2)),
@@ -151,7 +117,7 @@ function constellation(rng, W, H, animate) {
       const mx = (p.x + q.x) / 2 + (rng() - 0.5) * 36;
       const my = (p.y + q.y) / 2 + (rng() - 0.5) * 36;
       arcs.push(
-        `<path d="M ${p.x} ${p.y} Q ${round(mx)} ${round(my)} ${q.x} ${q.y}" fill="none" stroke="${PALETTE.ink}" stroke-width="0.7" opacity="${round(0.1 + rng() * 0.14)}"/>`
+        `<path d="M ${p.x} ${p.y} Q ${round(mx)} ${round(my)} ${q.x} ${q.y}" fill="none" stroke="${PALETTE.ink}" stroke-width="0.7" opacity="${round(0.08 + rng() * 0.1)}"/>`
       );
     });
   });
@@ -176,14 +142,14 @@ function constellation(rng, W, H, animate) {
 }
 
 function candlelight(rng, W, H, animate) {
-  const blobs = Array.from({ length: 4 + Math.floor(rng() * 2) }, (_, i) => {
+  const blobs = Array.from({ length: 5 + Math.floor(rng() * 2) }, (_, i) => {
     const x = round(W * (0.15 + rng() * 0.7));
     const y = round(H * (0.15 + rng() * 0.7));
     const r = round(W * (0.3 + rng() * 0.3));
     const warm = i % 3 === 0 ? PALETTE.paperRaised : PALETTE.warm;
-    const o = i % 3 === 0 ? round(0.5 + rng() * 0.2) : round(0.12 + rng() * 0.1);
+    const o = i % 3 === 0 ? round(0.5 + rng() * 0.2) : round(0.16 + rng() * 0.12);
     const drift = animate
-      ? `<animateTransform attributeName="transform" type="translate" values="0 0; ${round((rng() - 0.5) * W * 0.07)} ${round((rng() - 0.5) * H * 0.07)}; 0 0" dur="${round(52 + rng() * 14)}s" repeatCount="indefinite"/>`
+      ? `<animateTransform attributeName="transform" type="translate" values="0 0; ${round((rng() - 0.5) * W * 0.07)} ${round((rng() - 0.5) * H * 0.07)}; 0 0" dur="${round(64 + rng() * 16)}s" repeatCount="indefinite"/>`
       : '';
     return `<g>${drift}<circle cx="${x}" cy="${y}" r="${r}" fill="${warm}" opacity="${o}" filter="url(#soft)"/></g>`;
   }).join('');
@@ -212,7 +178,7 @@ function score(rng, W, H, animate) {
     for (let l = 0; l < 5; l++) {
       const y = round(gy + l * lineGap);
       elems.push(
-        `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${PALETTE.ink}" stroke-width="0.7" opacity="0.28"/>`
+        `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${PALETTE.ink}" stroke-width="0.7" opacity="0.34"/>`
       );
     }
     // A few note-heads sitting on the staff.
@@ -226,7 +192,7 @@ function score(rng, W, H, animate) {
           ? `<animate attributeName="opacity" values="0.55;1;0.55" dur="9s" repeatCount="indefinite"/>`
           : '';
       elems.push(
-        `<ellipse cx="${nx}" cy="${ny}" rx="3" ry="2.4" transform="rotate(-20 ${nx} ${ny})" fill="${accent ? PALETTE.accent : PALETTE.ink}" opacity="${accent ? 0.95 : round(0.5 + rng() * 0.3)}">${pulse}</ellipse>`
+        `<ellipse cx="${nx}" cy="${ny}" rx="${accent ? 3.6 : 3}" ry="${accent ? 2.9 : 2.4}" transform="rotate(-20 ${nx} ${ny})" fill="${accent ? PALETTE.warm : PALETTE.ink}" opacity="${accent ? 0.95 : round(0.5 + rng() * 0.3)}">${pulse}</ellipse>`
       );
     }
   }
@@ -245,7 +211,7 @@ function score(rng, W, H, animate) {
   };
 }
 
-const STYLES = { depth, thread, constellation, candlelight, score };
+const STYLES = { depth, constellation, candlelight, score };
 
 // ---- Assembly ---------------------------------------------------------------
 
