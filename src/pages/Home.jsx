@@ -81,7 +81,7 @@ function Pricing() {
         </div>
         <p className="mx-auto mt-5 max-w-xs text-sm leading-relaxed text-ink-soft">
           Every track. No hourly pause. Downloads that stay offline for {DOWNLOAD_EXPIRY_DAYS} days.
-          Cancel anytime.
+          Renews monthly at ${PRICE.amount}; cancel anytime.
         </p>
         <Link to="/app?subscribe=1" className="btn-primary mt-8 w-full">
           Subscribe — {PRICE.label}

@@ -23,7 +23,11 @@ export default function Privacy() {
         Your listening history is for you.
       </Section>
 
-      <Section title="Cookies">Only what keeps you signed in. Nothing for tracking.</Section>
+      <Section title="Cookies and storage">
+        We keep you signed in using your browser&rsquo;s local storage — not tracking cookies. There
+        are no advertising, analytics, or third-party cookies of any kind, so there is nothing to
+        consent to.
+      </Section>
 
       <Section title="Deleting your data">
         Open your account and choose “Delete everything”. It removes your account, listening history,

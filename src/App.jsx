@@ -18,7 +18,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <RouteProgress />
-      <Nav isSubscriber={subscription.isSubscriber} />
+      <Nav isSubscriber={subscription.isSubscriber} isSignedIn={!!subscription.user} />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/app" element={<AppPage subscription={subscription} />} />

@@ -46,13 +46,17 @@ export default function SubscribeModal({ open, onClose }) {
         <h2 className="text-h2 text-ink">Uninterrupted.</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
           Every track, no hourly pause, and downloads that stay with you offline for{' '}
-          {DOWNLOAD_EXPIRY_DAYS} days. Cancel anytime.
+          {DOWNLOAD_EXPIRY_DAYS} days.
         </p>
 
         <div className="mt-6 flex items-baseline gap-2 border-y border-line py-4">
           <span className="font-display text-4xl font-light text-ink">${PRICE.amount}</span>
           <span className="text-ink-soft">/ month</span>
         </div>
+
+        <p className="text-caption mt-3">
+          Renews monthly at ${PRICE.amount} until you cancel. Cancel anytime from your account.
+        </p>
 
         {signedIn ? (
           <button

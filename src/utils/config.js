@@ -8,6 +8,7 @@ export const PRICE = {
   amount: 2.99,
   currency: 'USD',
   label: '$2.99/month',
+  short: '$2.99/mo',
 };
 
 // Free tier: unlimited listening for the first hour of any session. After that,

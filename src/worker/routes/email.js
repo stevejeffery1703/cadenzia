@@ -2,7 +2,8 @@
 //   POST /api/email/subscribe   → opt-in to new-track announcements (consent required)
 //   GET  /api/email/unsubscribe → one-click unsubscribe link target
 //
-// We only ever email about new music. Every email carries an unsubscribe link.
+// We only ever email about new music. Every marketing email carries an
+// unsubscribe link and our physical postal address (CAN-SPAM).
 
 import { json } from '../middleware/cors.js';
 import { selectOne, insertRow, updateRows } from '../lib/db.js';
@@ -55,7 +56,15 @@ export async function sendEmail(env, { to, subject, text, html, marketing = fals
     console.log(`[email:dev] to=${to} subject="${subject}"\n${text || ''}`);
     return { dev: true };
   }
+  // CAN-SPAM: every marketing message needs a valid physical postal address and a
+  // working unsubscribe. Refuse to send marketing mail without the address rather
+  // than ever send a non-compliant blast. Set MAILING_ADDRESS as a Worker var.
+  if (marketing && !env.MAILING_ADDRESS) {
+    throw new Error('MAILING_ADDRESS must be set before sending marketing email (CAN-SPAM).');
+  }
   const unsubscribe = `${env.APP_URL}/api/email/unsubscribe?email=${encodeURIComponent(to)}`;
+  const footerText = `\n\n${env.MAILING_ADDRESS}\nUnsubscribe: ${unsubscribe}`;
+  const footerHtml = `<p style="margin-top:24px;color:#6B6358;font-size:12px;line-height:1.5">${env.MAILING_ADDRESS}<br><a href="${unsubscribe}" style="color:#6B6358">Unsubscribe</a></p>`;
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -66,8 +75,8 @@ export async function sendEmail(env, { to, subject, text, html, marketing = fals
       from: 'Cadenzia <hello@cadenzia.app>',
       to,
       subject,
-      text: marketing && text ? `${text}\n\nUnsubscribe: ${unsubscribe}` : text,
-      html: marketing && html ? `${html}<p><a href="${unsubscribe}">Unsubscribe</a></p>` : html,
+      text: marketing && text ? `${text}${footerText}` : text,
+      html: marketing && html ? `${html}${footerHtml}` : html,
     }),
   });
   if (!res.ok) throw new Error(`Resend failed (${res.status})`);

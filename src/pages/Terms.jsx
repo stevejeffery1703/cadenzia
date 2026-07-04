@@ -113,7 +113,8 @@ export default function Terms() {
 
       <Section title="11. Governing law">
         These terms are governed by the laws of the State of Texas, USA, without regard to
-        conflict-of-law principles.
+        conflict-of-law principles. {APP_NAME} is operated from Texas and intended for use in the
+        United States.
       </Section>
 
       <Section title="12. Changes to these terms">

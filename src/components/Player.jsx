@@ -18,7 +18,7 @@ export default function Player({ audio, isSubscriber, onResume }) {
       <section className="flex min-h-[60vh] flex-col items-center justify-center text-center">
         <p className="text-h2 text-ink-soft">Choose something to begin.</p>
         <p className="mt-3 max-w-sm text-sm text-ink-faint">
-          Put your headphones on. Pick a piece from the library and let the room go quiet.
+          Put your headphones on and pick a track that fits the moment.
         </p>
         {lastTrack && (
           <button

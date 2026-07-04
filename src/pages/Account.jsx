@@ -38,7 +38,7 @@ export default function Account({ subscription }) {
         <p className="mt-3 text-sm text-ink-soft">
           {sessionExpired
             ? "Your session expired. Sign in again to continue — there's no password to remember."
-            : 'We send a one-time code. There is no password to remember.'}
+            : "Enter your email address, and we'll send a one-time code. There is no password to remember."}
         </p>
 
         {signIn.step === 'email' ? (

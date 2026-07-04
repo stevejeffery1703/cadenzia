@@ -4,7 +4,7 @@ import Logo from './Logo';
 
 // Quiet, sparse top bar. The mark and wordmark sit together; everything else is
 // understated until you reach for an action.
-export default function Nav({ isSubscriber }) {
+export default function Nav({ isSubscriber, isSignedIn }) {
   const { pathname } = useLocation();
   const link = (to, label) => (
     <Link
@@ -26,10 +26,10 @@ export default function Nav({ isSubscriber }) {
         </Link>
         <div className="flex items-center gap-7">
           {link('/app', 'Listen')}
-          {link('/account', 'Account')}
+          {link('/account', isSignedIn ? 'Account' : 'Sign in')}
           {!isSubscriber && (
             <Link to="/app?subscribe=1" className="btn-primary hidden px-5 py-2 sm:inline-flex">
-              {PRICE.label}
+              Unlimited · {PRICE.short}
             </Link>
           )}
         </div>
