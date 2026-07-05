@@ -76,7 +76,7 @@ export default function Player({ audio, isSubscriber, onResume }) {
       )}
 
       <div className="mt-7 h-12 w-full max-w-md">
-        <Waveform getAnalyser={audio.analyser} playing={audio.playing} />
+        <Waveform playing={audio.playing} />
       </div>
 
       {/* Track progress — a single thin pine line. */}

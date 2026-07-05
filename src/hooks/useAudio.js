@@ -4,18 +4,22 @@ import { APP_NAME, FADE_IN_SECONDS, CROSSFADE_SECONDS } from '../utils/config';
 
 // Playback engine.
 //
-// Audio runs through a Web Audio graph so we can fade and crossfade smoothly and
-// tap an analyser for the waveform visualiser. Two HTMLAudioElements (good for
-// streaming long masters and OS background playback) feed two gain nodes into a
-// shared analyser → master gain → destination:
+// Deliberately a single, bare HTMLAudioElement — NOT routed through Web Audio.
+// Reliable background playback is the whole point: iOS suspends an AudioContext
+// the instant the tab/PWA is backgrounded or the screen locks, which silences
+// anything played through a Web Audio graph. A plain <audio> element paired with
+// the Media Session API is what the OS treats as real background media — it keeps
+// playing on the lock screen like a podcast. So there is intentionally no
+// AudioContext, no analyser, and no GainNodes here.
 //
-//   elementA → sourceA → gainA ┐
-//                              ├→ analyser → master(volume) → destination
-//   elementB → sourceB → gainB ┘
-//
-// A single track plays on the active channel at full mix gain; switching tracks
-// crossfades by ramping the two channel gains in opposite directions. The audio
-// context is created on first play (autoplay policy needs a user gesture).
+// Consequences of that choice, all deliberate:
+//   • Fades are done by ramping the element's own `volume`. iOS ignores
+//     programmatic volume, so there a fade is simply a clean cut — harmless,
+//     since there is no volume slider in the UI.
+//   • Track changes dip out and back in on the SAME element rather than
+//     overlap-crossfading two elements (an overlap would double loudness on iOS
+//     where the outgoing track can't be faded down).
+//   • The waveform is cosmetic/synthetic now — there is no live spectrum to tap.
 
 const resolve = (src) => new URL(src, window.location.href).href;
 
@@ -28,7 +32,10 @@ export function getLastTrackId() {
 }
 
 export function useAudio({ onTick, onSessionComplete, onTrackComplete } = {}) {
-  const A = useRef(null); // graph: { ctx, analyser, master, chans, active }
+  const elRef = useRef(null); // the single <audio> element
+  const fadeRef = useRef(0); // active volume-tween rAF id
+  const intentRef = useRef(false); // whether we intend to be playing (bg recovery)
+
   const [track, setTrack] = useState(null);
   const [playing, setPlaying] = useState(false);
   const [loop, setLoop] = useState(false);
@@ -38,68 +45,59 @@ export function useAudio({ onTick, onSessionComplete, onTrackComplete } = {}) {
   const [duration, setDuration] = useState(0);
 
   const volumeRef = useRef(volume);
+  const trackRef = useRef(track);
+  trackRef.current = track;
   const cbRef = useRef({ onTick, onSessionComplete, onTrackComplete });
   cbRef.current = { onTick, onSessionComplete, onTrackComplete };
+  // onEnded (wired once, on mount) needs the latest loadTrack without
+  // re-subscribing every render — reach it through a ref.
+  const loadTrackRef = useRef(null);
 
-  // Build the Web Audio graph once, on a user gesture.
-  const ensureGraph = useCallback(() => {
-    if (A.current) return A.current;
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new Ctx();
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 1024;
-    analyser.smoothingTimeConstant = 0.85;
-    const master = ctx.createGain();
-    master.gain.value = volumeRef.current;
-    analyser.connect(master);
-    master.connect(ctx.destination);
-
-    const chans = [0, 1].map(() => {
-      const el = new Audio();
-      el.preload = 'auto';
-      el.crossOrigin = 'anonymous';
-      const source = ctx.createMediaElementSource(el);
-      const gain = ctx.createGain();
-      gain.gain.value = 0;
-      source.connect(gain);
-      gain.connect(analyser);
-      return { el, source, gain };
-    });
-
-    A.current = { ctx, analyser, master, chans, active: 0 };
-    return A.current;
+  const applyVolume = useCallback((v) => {
+    const el = elRef.current;
+    if (el) el.volume = Math.max(0, Math.min(1, v));
   }, []);
 
-  // Ramp a GainNode's gain param to `to` over `seconds` — the basis of fades
-  // and crossfades. (cancelScheduledValues etc. live on the AudioParam, not the
-  // node, so we reach through to gainNode.gain.)
-  const ramp = useCallback((gainNode, to, seconds) => {
-    const { ctx } = A.current;
-    const param = gainNode.gain;
-    const now = ctx.currentTime;
-    param.cancelScheduledValues(now);
-    param.setValueAtTime(param.value, now);
-    param.linearRampToValueAtTime(to, now + Math.max(0.01, seconds));
+  const cancelFade = useCallback(() => {
+    if (fadeRef.current) {
+      cancelAnimationFrame(fadeRef.current);
+      fadeRef.current = 0;
+    }
   }, []);
 
-  // Per-second session clock. Drives the free-tier gate and track position.
-  useEffect(() => {
-    if (!playing) return undefined;
-    const id = setInterval(() => {
-      setElapsed((prev) => {
-        const next = prev + 1;
-        cbRef.current.onTick?.(next);
-        return next;
-      });
-      const g = A.current;
-      if (g) {
-        const el = g.chans[g.active].el;
-        setPosition(el.currentTime || 0);
-        if (el.duration && !Number.isNaN(el.duration)) setDuration(el.duration);
+  // Ramp element volume to `fraction` (0..1 of the user volume) over `seconds`.
+  // Jumps instantly when the page is hidden: rAF is frozen in the background, and
+  // we must never leave audio stuck at a silent volume — otherwise a track that
+  // auto-advances while backgrounded would play inaudibly.
+  const fadeTo = useCallback(
+    (fraction, seconds, onDone) => {
+      const el = elRef.current;
+      if (!el) return;
+      cancelFade();
+      const target = fraction * volumeRef.current;
+      if (document.hidden || seconds <= 0) {
+        applyVolume(target);
+        onDone?.();
+        return;
       }
-    }, 1000);
-    return () => clearInterval(id);
-  }, [playing]);
+      const from = el.volume;
+      const start = performance.now();
+      const durMs = seconds * 1000;
+      const step = (now) => {
+        const t = Math.min(1, (now - start) / durMs);
+        applyVolume(from + (target - from) * t);
+        if (t < 1) {
+          fadeRef.current = requestAnimationFrame(step);
+        } else {
+          fadeRef.current = 0;
+          applyVolume(target);
+          onDone?.();
+        }
+      };
+      fadeRef.current = requestAnimationFrame(step);
+    },
+    [applyVolume, cancelFade]
+  );
 
   const updateMediaSession = useCallback((t) => {
     if (!('mediaSession' in navigator) || !t) return;
@@ -116,85 +114,141 @@ export function useAudio({ onTick, onSessionComplete, onTrackComplete } = {}) {
     }
   }, []);
 
-  const play = useCallback(() => {
-    const g = ensureGraph();
-    if (g.ctx.state === 'suspended') g.ctx.resume();
-    const ch = g.chans[g.active];
-    if (!ch.el.src) return;
-    ch.el.play().catch(() => {
-      /* placeholder masters 404 in dev — the session UI still runs */
-    });
-    ramp(ch.gain, 1, 0.4);
-    setPlaying(true);
-  }, [ensureGraph, ramp]);
+  // Create the single audio element once, and wire the element's own events as
+  // the source of truth for play/pause/ended — so the UI can't lie about state
+  // after the OS pauses us in the background.
+  useEffect(() => {
+    const el = new Audio();
+    el.preload = 'auto';
+    // No crossOrigin: we no longer read samples, so avoid a CORS dependency that
+    // could otherwise taint/break plain playback.
+    elRef.current = el;
 
-  const pause = useCallback(() => {
-    const g = A.current;
-    setPlaying(false);
-    if (!g) return;
-    const ch = g.chans[g.active];
-    ramp(ch.gain, 0, 0.3);
-    setTimeout(() => {
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    const onTime = () => {
+      setPosition(el.currentTime || 0);
+      if (el.duration && !Number.isNaN(el.duration)) setDuration(el.duration);
+    };
+    const onEnded = () => {
+      if (el.loop) return; // native loop re-plays; 'ended' won't fire, but be safe
+      const t = trackRef.current;
+      cbRef.current.onTrackComplete?.(t);
+      const n = t ? nextInCategory(t.id) : null;
+      if (n) {
+        loadTrackRef.current?.(n, { autoplay: true });
+      } else {
+        intentRef.current = false;
+        setPlaying(false);
+      }
+    };
+
+    el.addEventListener('play', onPlay);
+    el.addEventListener('pause', onPause);
+    el.addEventListener('timeupdate', onTime);
+    el.addEventListener('ended', onEnded);
+
+    return () => {
+      cancelFade();
+      el.removeEventListener('play', onPlay);
+      el.removeEventListener('pause', onPause);
+      el.removeEventListener('timeupdate', onTime);
+      el.removeEventListener('ended', onEnded);
       try {
-        ch.el.pause();
+        el.pause();
       } catch {
         /* no-op */
       }
-    }, 320);
-  }, [ramp]);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Load a track. If something is already playing, crossfade to the new track on
-  // the other channel; otherwise fade in on the active channel.
+  // Per-second session clock. Drives the free-tier gate. (Throttles in the
+  // background, which only makes the free hour more generous — never less.)
+  useEffect(() => {
+    if (!playing) return undefined;
+    const id = setInterval(() => {
+      setElapsed((prev) => {
+        const next = prev + 1;
+        cbRef.current.onTick?.(next);
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [playing]);
+
+  const play = useCallback(() => {
+    const el = elRef.current;
+    if (!el || !el.src) return;
+    intentRef.current = true;
+    setPlaying(true);
+    applyVolume(0);
+    el.play()
+      .then(() => fadeTo(1, FADE_IN_SECONDS))
+      .catch(() => {
+        /* placeholder masters 404 in dev — the session UI still runs */
+      });
+  }, [applyVolume, fadeTo]);
+
+  const pause = useCallback(() => {
+    const el = elRef.current;
+    intentRef.current = false;
+    setPlaying(false);
+    if (!el) return;
+    fadeTo(0, 0.3, () => {
+      try {
+        el.pause();
+      } catch {
+        /* no-op */
+      }
+    });
+  }, [fadeTo]);
+
+  // Load a track on the single element. If something is already playing, dip the
+  // volume out, swap the source, then fade back in — a clean transition with no
+  // overlap (see the header note on why we don't overlap-crossfade).
   const loadTrack = useCallback(
     (nextTrack, { autoplay = true, resetSession = false } = {}) => {
       if (!nextTrack) return;
-      const g = ensureGraph();
-      if (g.ctx.state === 'suspended') g.ctx.resume();
+      const el = elRef.current;
+      if (!el) return;
 
-      const cur = g.chans[g.active];
-      const switching = playing && cur.el.src && resolve(cur.el.src) !== resolve(nextTrack.file);
+      const start = () => {
+        el.src = nextTrack.file;
+        el.loop = !!nextTrack.loop;
+        el.currentTime = 0;
+        applyVolume(0);
 
-      if (switching) {
-        const nextIdx = 1 - g.active;
-        const nxt = g.chans[nextIdx];
-        nxt.el.src = nextTrack.file;
-        nxt.el.loop = !!nextTrack.loop;
-        nxt.el.currentTime = 0;
-        nxt.gain.gain.value = 0;
-        nxt.el.play().catch(() => {});
-        ramp(nxt.gain, 1, CROSSFADE_SECONDS);
-        ramp(cur.gain, 0, CROSSFADE_SECONDS);
-        const old = cur;
-        setTimeout(() => {
-          try {
-            old.el.pause();
-          } catch {
-            /* no-op */
-          }
-        }, CROSSFADE_SECONDS * 1000 + 80);
-        g.active = nextIdx;
-      } else {
-        cur.el.src = nextTrack.file;
-        cur.el.loop = !!nextTrack.loop;
-        cur.el.currentTime = 0;
-        cur.gain.gain.value = 0;
+        setTrack(nextTrack);
+        setLoop(!!nextTrack.loop);
+        setPosition(0);
+        setDuration(nextTrack.durationSeconds || 0);
+        if (resetSession) setElapsed(0);
+        updateMediaSession(nextTrack);
+        localStorage.setItem(LAST_TRACK_KEY, nextTrack.id);
+
         if (autoplay) {
-          cur.el.play().catch(() => {});
-          ramp(cur.gain, 1, FADE_IN_SECONDS);
+          intentRef.current = true;
+          setPlaying(true);
+          el.play()
+            .then(() => fadeTo(1, FADE_IN_SECONDS))
+            .catch(() => {});
+        } else {
+          setPlaying(false);
         }
-      }
+      };
 
-      setTrack(nextTrack);
-      setLoop(!!nextTrack.loop);
-      setPosition(0);
-      setDuration(nextTrack.durationSeconds || 0);
-      if (resetSession) setElapsed(0);
-      setPlaying(autoplay);
-      updateMediaSession(nextTrack);
-      localStorage.setItem(LAST_TRACK_KEY, nextTrack.id);
+      const switching =
+        autoplay && !el.paused && el.src && resolve(el.src) !== resolve(nextTrack.file);
+      if (switching) {
+        fadeTo(0, Math.min(0.4, CROSSFADE_SECONDS / 2), start);
+      } else {
+        start();
+      }
     },
-    [ensureGraph, playing, ramp, updateMediaSession]
+    [applyVolume, fadeTo, updateMediaSession]
   );
+  loadTrackRef.current = loadTrack;
 
   const toggle = useCallback(() => {
     if (playing) pause();
@@ -202,44 +256,35 @@ export function useAudio({ onTick, onSessionComplete, onTrackComplete } = {}) {
   }, [playing, play, pause]);
 
   const skipNext = useCallback(() => {
-    if (!track) return;
-    const n = nextInCategory(track.id);
+    const t = trackRef.current;
+    if (!t) return;
+    const n = nextInCategory(t.id);
     if (n) loadTrack(n, { autoplay: true });
-  }, [track, loadTrack]);
+  }, [loadTrack]);
 
   const toggleLoop = useCallback(() => {
     setLoop((prev) => {
       const next = !prev;
-      const g = A.current;
-      if (g) g.chans[g.active].el.loop = next;
+      if (elRef.current) elRef.current.loop = next;
       return next;
     });
   }, []);
 
-  const setVolume = useCallback((v) => {
-    volumeRef.current = v;
-    setVolumeState(v);
-    const g = A.current;
-    if (g) g.master.gain.value = v;
-  }, []);
+  const setVolume = useCallback(
+    (v) => {
+      volumeRef.current = v;
+      setVolumeState(v);
+      // Reflect immediately when audible and not mid-fade; fades read volumeRef.
+      if (!fadeRef.current && intentRef.current) applyVolume(v);
+    },
+    [applyVolume]
+  );
 
-  // Auto-advance when a non-looping track ends: crossfade to the next track.
+  // Keep the OS/lock-screen state in sync with our own.
   useEffect(() => {
-    const g = A.current;
-    if (!g) return undefined;
-    const handlers = g.chans.map((ch) => {
-      const onEnded = () => {
-        if (ch.el.loop) return;
-        cbRef.current.onTrackComplete?.(track);
-        const n = track ? nextInCategory(track.id) : null;
-        if (n) loadTrack(n, { autoplay: true });
-        else setPlaying(false);
-      };
-      ch.el.addEventListener('ended', onEnded);
-      return { el: ch.el, onEnded };
-    });
-    return () => handlers.forEach(({ el, onEnded }) => el.removeEventListener('ended', onEnded));
-  }, [track, loadTrack]);
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
+  }, [playing]);
 
   // Lock-screen / hardware controls.
   useEffect(() => {
@@ -254,6 +299,20 @@ export function useAudio({ onTick, onSessionComplete, onTrackComplete } = {}) {
     };
   }, [play, pause, skipNext]);
 
+  // Returning to the foreground: if the OS paused us in the background but we
+  // still intend to play, resume. (A no-op when the element kept playing.)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.hidden) return;
+      const el = elRef.current;
+      if (el && intentRef.current && el.paused && el.src) {
+        el.play().catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+
   return {
     track,
     playing,
@@ -262,7 +321,6 @@ export function useAudio({ onTick, onSessionComplete, onTrackComplete } = {}) {
     elapsed,
     position,
     duration,
-    analyser: () => A.current?.analyser || null,
     loadTrack,
     play,
     pause,

@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
 
-// Subtle waveform visualiser. Reads the live analyser while playing and draws a
-// low-amplitude pine spectrum — present, never distracting. When paused, or when
-// the user prefers reduced motion, it settles to a faint static line.
+// Ambient waveform. Cosmetic only — there is no live audio spectrum to read
+// (playback runs on a bare <audio> element for reliable background playback, not
+// through Web Audio). While playing it draws a slow, low-amplitude pine swell;
+// paused, or under reduced-motion, it settles to a faint static line.
 const PINE = '#2F4A3C';
 const PINE_BRIGHT = '#3E624F';
 const GHOST = '#CFC6B5';
 
-export default function Waveform({ getAnalyser, playing, bars = 56, className = '' }) {
+export default function Waveform({ playing, bars = 56, className = '' }) {
   const canvasRef = useRef(null);
   const rafRef = useRef(0);
 
@@ -28,8 +29,6 @@ export default function Waveform({ getAnalyser, playing, bars = 56, className = 
     };
 
     let { w, h } = sizeCanvas();
-    const analyser = getAnalyser ? getAnalyser() : null;
-    const data = analyser ? new Uint8Array(analyser.frequencyBinCount) : null;
 
     const drawBars = (amplitudes) => {
       ctx.clearRect(0, 0, w, h);
@@ -56,33 +55,37 @@ export default function Waveform({ getAnalyser, playing, bars = 56, className = 
     const staticBars = () =>
       Array.from({ length: bars }, (_, i) => 0.03 + 0.015 * Math.sin(i * 0.5));
 
-    const loop = () => {
-      if (playing && analyser && !reduce) {
-        analyser.getByteFrequencyData(data);
-        // Sample a low/mid slice of the spectrum and damp it for calm motion.
-        const amps = Array.from({ length: bars }, (_, i) => {
-          const idx = Math.floor((i / bars) * (data.length * 0.6));
-          return (data[idx] / 255) * 0.85;
-        });
-        drawBars(amps);
+    // A gentle travelling swell built from two slow, out-of-phase sines — calm
+    // motion that reads as "playing" without pretending to track the audio.
+    const swellBars = (time) =>
+      Array.from({ length: bars }, (_, i) => {
+        const phase = i * 0.35;
+        const s1 = Math.sin(time * 0.0016 + phase) * 0.5 + 0.5;
+        const s2 = Math.sin(time * 0.0009 + phase * 0.6) * 0.5 + 0.5;
+        return 0.06 + 0.12 * s1 * s2;
+      });
+
+    const loop = (time) => {
+      if (playing && !reduce) {
+        drawBars(swellBars(time || 0));
         rafRef.current = requestAnimationFrame(loop);
       } else {
         drawBars(staticBars());
       }
     };
 
-    loop();
+    loop(0);
 
     const onResize = () => {
       ({ w, h } = sizeCanvas());
-      if (!(playing && analyser && !reduce)) drawBars(staticBars());
+      if (!(playing && !reduce)) drawBars(staticBars());
     };
     window.addEventListener('resize', onResize);
     return () => {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', onResize);
     };
-  }, [playing, getAnalyser, bars]);
+  }, [playing, bars]);
 
   return <canvas ref={canvasRef} className={`h-full w-full ${className}`} aria-hidden="true" />;
 }
