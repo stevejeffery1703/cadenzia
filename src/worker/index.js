@@ -55,7 +55,7 @@ export default {
 
     // Audio streaming from R2 (public read; no auth needed for free streaming).
     if (url.pathname.startsWith('/audio/')) {
-      return serveAudio(url, env);
+      return serveAudio(request, url, env);
     }
 
     // API routing.
@@ -120,15 +120,70 @@ function rewriteMetaForPath(response, path) {
     .transform(response);
 }
 
-async function serveAudio(url, env) {
+// Stream audio from R2 with HTTP Range support. iOS Safari (and most media
+// players) request audio with byte ranges — an initial `bytes=0-` probe, then
+// further ranges to seek — and expect a 206 Partial Content response with a
+// Content-Range header. Returning the whole file as a flat 200 can break
+// seeking and, on iOS, background/lock-screen playback of longer tracks. R2
+// parses the Range and conditional headers for us when we hand it the request
+// headers; we just have to shape the response.
+async function serveAudio(request, url, env) {
   const objectKey = decodeURIComponent(url.pathname.replace('/audio/', ''));
-  const object = await env.AUDIO_BUCKET.get(objectKey);
+
+  // HEAD: metadata only — advertise range support and the size, no body.
+  if (request.method === 'HEAD') {
+    const head = await env.AUDIO_BUCKET.head(objectKey);
+    if (!head) return new Response(null, { status: 404 });
+    const headers = audioHeaders(head);
+    headers.set('Content-Length', String(head.size));
+    return new Response(null, { status: 200, headers });
+  }
+
+  const object = await env.AUDIO_BUCKET.get(objectKey, {
+    range: request.headers,
+    onlyIf: request.headers,
+  });
   if (!object) return new Response('Not found', { status: 404 });
 
+  const headers = audioHeaders(object);
+
+  // A conditional request (If-None-Match / If-Modified-Since) whose precondition
+  // held → R2 returns no body → Not Modified.
+  if (!('body' in object) || !object.body) {
+    return new Response(null, { status: 304, headers });
+  }
+
+  // A satisfied Range request → 206 with the served span.
+  const span = request.headers.get('Range') ? resolveRange(object.range, object.size) : null;
+  if (span) {
+    const end = span.offset + span.length - 1;
+    headers.set('Content-Range', `bytes ${span.offset}-${end}/${object.size}`);
+    headers.set('Content-Length', String(span.length));
+    return new Response(object.body, { status: 206, headers });
+  }
+
+  headers.set('Content-Length', String(object.size));
+  return new Response(object.body, { status: 200, headers });
+}
+
+function audioHeaders(object) {
   const headers = new Headers();
   object.writeHttpMetadata(headers);
   headers.set('etag', object.httpEtag);
   headers.set('Cache-Control', 'public, max-age=3600');
   headers.set('Accept-Ranges', 'bytes');
-  return new Response(object.body, { headers });
+  return headers;
+}
+
+// Normalise R2's resolved range (offset/length, or a suffix like `bytes=-500`)
+// into a concrete { offset, length }. Returns null if there's nothing to honour.
+function resolveRange(range, size) {
+  if (!range) return null;
+  if ('suffix' in range && range.suffix != null) {
+    const length = Math.min(range.suffix, size);
+    return { offset: size - length, length };
+  }
+  const offset = range.offset ?? 0;
+  const length = range.length ?? size - offset;
+  return { offset, length };
 }
