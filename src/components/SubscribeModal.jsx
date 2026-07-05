@@ -46,7 +46,8 @@ export default function SubscribeModal({ open, onClose }) {
         <h2 className="text-h2 text-ink">Uninterrupted.</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
           Every track, no hourly pause, and downloads that stay with you offline for{' '}
-          {DOWNLOAD_EXPIRY_DAYS} days.
+          {DOWNLOAD_EXPIRY_DAYS} days. It keeps playing while you work in other apps or your screen
+          sleeps.
         </p>
 
         <div className="mt-6 flex items-baseline gap-2 border-y border-line py-4">

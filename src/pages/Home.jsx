@@ -86,7 +86,9 @@ function Pricing() {
         <Link to="/app?subscribe=1" className="btn-primary mt-8 w-full">
           Subscribe — {PRICE.label}
         </Link>
-        <p className="text-caption mt-4">Free to begin. An hour of open listening in every session.</p>
+        <p className="text-caption mt-4">
+          Free to begin. An hour of open listening in every session. Plays on with your screen off.
+        </p>
       </div>
     </section>
   );

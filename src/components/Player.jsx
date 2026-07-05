@@ -20,6 +20,9 @@ export default function Player({ audio, isSubscriber, onResume }) {
         <p className="mt-3 max-w-sm text-sm text-ink-faint">
           Put your headphones on and pick a track that fits the moment.
         </p>
+        <p className="text-caption mt-2 max-w-sm">
+          It keeps playing when you switch apps or lock your screen.
+        </p>
         {lastTrack && (
           <button
             type="button"
