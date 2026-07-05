@@ -23,7 +23,7 @@ export default function PlayCounter({ className = '' }) {
 
   return (
     <p className={`text-sm text-ink-soft ${className}`}>
-      {count.toLocaleString('en-US')} sessions of deep focus, and counting.
+      {count.toLocaleString('en-US')} tracks played, and counting.
     </p>
   );
 }

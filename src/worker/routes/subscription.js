@@ -100,9 +100,11 @@ export async function webhook(request, env) {
     case 'customer.subscription.updated': {
       const customerId = obj.customer;
       const status = obj.status === 'active' || obj.status === 'trialing' ? 'active' : 'free';
-      const periodEnd = obj.current_period_end
-        ? new Date(obj.current_period_end * 1000).toISOString()
-        : null;
+      // current_period_end sat on the Subscription object in older API versions;
+      // newer ones (2025+) moved it onto each subscription item. Read whichever
+      // is present so the stored period end survives an API-version bump.
+      const periodEndUnix = obj.current_period_end ?? obj.items?.data?.[0]?.current_period_end ?? null;
+      const periodEnd = periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null;
       await syncSubscription(env, customerId, obj.id || null, status, periodEnd);
       break;
     }

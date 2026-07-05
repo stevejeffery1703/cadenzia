@@ -31,7 +31,7 @@ export function getLastTrackId() {
   return localStorage.getItem(LAST_TRACK_KEY) || null;
 }
 
-export function useAudio({ onTick, onSessionComplete, onTrackComplete } = {}) {
+export function useAudio({ onTick, onTrackComplete } = {}) {
   const elRef = useRef(null); // the single <audio> element
   const fadeRef = useRef(0); // active volume-tween rAF id
   const intentRef = useRef(false); // whether we intend to be playing (bg recovery)
@@ -47,8 +47,8 @@ export function useAudio({ onTick, onSessionComplete, onTrackComplete } = {}) {
   const volumeRef = useRef(volume);
   const trackRef = useRef(track);
   trackRef.current = track;
-  const cbRef = useRef({ onTick, onSessionComplete, onTrackComplete });
-  cbRef.current = { onTick, onSessionComplete, onTrackComplete };
+  const cbRef = useRef({ onTick, onTrackComplete });
+  cbRef.current = { onTick, onTrackComplete };
   // onEnded (wired once, on mount) needs the latest loadTrack without
   // re-subscribing every render — reach it through a ref.
   const loadTrackRef = useRef(null);

@@ -127,7 +127,7 @@ export default function Terms() {
         Questions about these terms — write to hello@cadenzia.app.
       </Section>
 
-      <p className="text-caption mt-12">Last updated 1 July 2026.</p>
+      <p className="text-caption mt-12">Last updated 4 July 2026.</p>
     </main>
   );
 }

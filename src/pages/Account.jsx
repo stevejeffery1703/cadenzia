@@ -95,7 +95,7 @@ export default function Account({ subscription }) {
     <main className="page-enter mx-auto max-w-3xl px-6 py-16">
       {justSubscribed && (
         <p className="mb-8 rounded-lg border border-line bg-paper-wash p-4 text-sm text-ink-soft">
-          Thank you — you're subscribed. Every track, no hourly pause.
+          Thank you — you're subscribed. No more hourly pause.
         </p>
       )}
       <div className="flex items-center justify-between">

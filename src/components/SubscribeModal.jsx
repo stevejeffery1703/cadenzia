@@ -45,7 +45,7 @@ export default function SubscribeModal({ open, onClose }) {
       >
         <h2 className="text-h2 text-ink">Uninterrupted.</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          Every track, no hourly pause, and downloads that stay with you offline for{' '}
+          No hourly pause, and downloads that stay with you offline for{' '}
           {DOWNLOAD_EXPIRY_DAYS} days. It keeps playing while you work in other apps or your screen
           sleeps.
         </p>
@@ -55,7 +55,7 @@ export default function SubscribeModal({ open, onClose }) {
           <span className="text-ink-soft">/ month</span>
         </div>
 
-        <p className="text-caption mt-3">
+        <p className="mt-3 text-xs text-ink-soft">
           Renews monthly at ${PRICE.amount} until you cancel. Cancel anytime from your account.
         </p>
 

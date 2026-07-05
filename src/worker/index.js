@@ -8,7 +8,6 @@
 import { handlePreflight, json } from './middleware/cors.js';
 import * as auth from './routes/auth.js';
 import * as subscription from './routes/subscription.js';
-import * as share from './routes/share.js';
 import * as download from './routes/download.js';
 import * as email from './routes/email.js';
 import * as plays from './routes/plays.js';
@@ -32,9 +31,6 @@ const ROUTES = {
   'POST /api/subscription/checkout': subscription.checkout,
   'POST /api/subscription/portal': subscription.portal,
   'POST /api/subscription/webhook': subscription.webhook,
-
-  'POST /api/share/token': share.createToken,
-  'POST /api/share/redeem': share.redeem,
 
   'POST /api/plays/increment': plays.increment,
   'GET /api/plays/count': plays.count,

@@ -15,11 +15,11 @@ way: no words, nothing sudden, a steady floor that masks distraction.
 | Layer    | Choice |
 |----------|--------|
 | Frontend | React + React Router, Tailwind (CSS custom-property token system), Vite |
-| Audio    | Web Audio API (two-element graph: fades, crossfade, analyser) + Media Session |
+| Audio    | A single bare HTML5 `<audio>` element + Media Session API (reliable lock-screen / background playback; no Web Audio) |
 | Artwork  | Generated SVG, deterministic per track — no image files for track art |
 | PWA      | Web App Manifest + service worker (installable, background playback) |
 | Backend  | Cloudflare Workers (API + static assets + R2 audio streaming) |
-| Storage  | Cloudflare R2 (audio), Cloudflare KV (sessions / share + auth tokens) |
+| Storage  | Cloudflare R2 (audio), Cloudflare KV (sign-in codes + rate-limit buckets) |
 | Database | Cloudflare D1 (SQLite) |
 | Payments | Stripe (hosted Checkout + Billing Portal + signature-verified webhook) |
 | Email    | Resend (sign-in codes + new-track announcements) |
@@ -52,10 +52,12 @@ A warm, editorial, **light** aesthetic — gallery paper, not a dark app.
   deterministic SVG seeded by track id (deep water, abstracted score, constellation,
   candlelight), one slow ambient animation, reduced-motion aware.
   Rendered to PNG for share cards.
-- **Player** — Web Audio engine ([`src/hooks/useAudio.js`](src/hooks/useAudio.js))
-  with 2s fade-in, 3s crossfade, auto-advance, analyser-driven waveform; large
-  artwork, minimal controls, session timer. Library + now-playing + session panel,
-  bottom sheet on mobile.
+- **Player** — a single bare `<audio>` element + Media Session
+  ([`src/hooks/useAudio.js`](src/hooks/useAudio.js)) for reliable background /
+  lock-screen playback: 2s fade-in, dip-and-swap track changes, auto-advance, and a
+  synthetic ambient waveform (no analyser — nothing routes through Web Audio, which
+  iOS suspends on background/lock). Large artwork, minimal controls, session timer.
+  Library + now-playing + session panel, bottom sheet on mobile.
 - **Free tier** — unlimited for the first hour of any session; then a calm
   interstitial offers *share to continue* or *subscribe*, equal weight
   ([`src/hooks/useSession.js`](src/hooks/useSession.js),

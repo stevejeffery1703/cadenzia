@@ -55,9 +55,15 @@ export async function verify(token, secret) {
 }
 
 // Extracts and verifies the bearer token from a request. Returns payload or null.
+// Only session tokens authenticate a user: those are minted without a `kind`,
+// whereas the signed download/share tokens carry `kind: 'download' | 'share'`.
+// Rejecting any token with a `kind` here keeps a scoped token (e.g. a download
+// link's token) from being replayed as a full session credential.
 export async function authedUser(request, env) {
   const header = request.headers.get('Authorization') || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return null;
-  return verify(token, env.JWT_SECRET);
+  const payload = await verify(token, env.JWT_SECRET);
+  if (!payload || payload.kind) return null;
+  return payload;
 }

@@ -66,7 +66,7 @@ export default function ShareInterstitial({ open, track, onClose, onUnlocked, on
           <div className="panel flex flex-col p-6">
             <h3 className="font-display text-xl text-ink">Subscribe</h3>
             <p className="mt-2 flex-1 text-sm text-ink-soft">
-              Every track, no interruptions, and downloads that stay with you. {PRICE.label}.
+              No interruptions, and downloads that stay with you. {PRICE.label}.
             </p>
             <button type="button" onClick={onSubscribe} className="btn-ghost mt-5 w-full">
               Subscribe — {PRICE.label}
