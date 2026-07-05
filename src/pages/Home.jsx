@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { getCategory } from '../utils/tracks';
+import { CATEGORIES } from '../utils/tracks';
 import { APP_NAME, PRICE, DOWNLOAD_EXPIRY_DAYS } from '../utils/config';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import Artwork from '../components/Artwork';
@@ -37,12 +37,12 @@ function Hero() {
 }
 
 function Previews() {
-  // Three categories, artwork forward. Let the work speak; no feature lists.
-  const featured = ['deep-focus', 'creativity', 'calm'].map(getCategory);
+  // All four categories, artwork forward. Let the work speak; no feature lists.
+  // Driven straight off CATEGORIES so it can't drift out of sync with the library.
   return (
     <section className="mx-auto max-w-content px-6 py-20">
-      <div className="grid gap-8 sm:grid-cols-3">
-        {featured.map((c) => (
+      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        {CATEGORIES.map((c) => (
           <Link key={c.id} to="/app" className="group block">
             <Artwork
               seed={`${c.id}-preview`}
