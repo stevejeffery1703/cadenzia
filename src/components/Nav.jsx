@@ -22,7 +22,7 @@ export default function Nav({ isSubscriber, isSignedIn }) {
       <nav className="mx-auto flex max-w-content items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2.5" aria-label={`${APP_NAME} — home`}>
           <Logo size={28} />
-          <span className="font-display text-2xl font-normal text-ink">{APP_NAME}</span>
+          <span className="font-display text-2xl font-normal text-accent">{APP_NAME}</span>
         </Link>
         <div className="flex items-center gap-7">
           {link('/app', 'Listen')}

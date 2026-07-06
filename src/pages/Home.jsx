@@ -26,7 +26,7 @@ function Hero() {
   return (
     <section className="mx-auto flex min-h-[76vh] max-w-content flex-col items-center justify-center px-6 text-center">
       <Logo size={52} className="mb-7" />
-      <h1 className="text-display text-ink">{APP_NAME}</h1>
+      <h1 className="text-display text-accent">{APP_NAME}</h1>
       <p className="mt-6 text-xl font-light text-ink-soft">Find your cadence.</p>
       <Link to="/app" className="btn-primary mt-12">
         Begin listening
@@ -100,7 +100,7 @@ function Footer() {
       <div className="mx-auto flex max-w-content flex-col items-center gap-6 px-6 py-12 text-center">
         <Link to="/" className="flex items-center gap-2.5">
           <Logo size={24} />
-          <span className="font-display text-2xl text-ink">{APP_NAME}</span>
+          <span className="font-display text-2xl text-accent">{APP_NAME}</span>
         </Link>
         <div className="flex gap-7">
           {[
