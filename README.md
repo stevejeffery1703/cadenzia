@@ -67,7 +67,7 @@ A warm, editorial, **light** aesthetic — gallery paper, not a dark app.
 - **Play counter** — honest social proof, D1-backed, atomically incremented
   on track completion, held back below a threshold
   ([`src/components/PlayCounter.jsx`](src/components/PlayCounter.jsx)).
-- **Subscription** — Stripe Checkout at **$2.99/month**, Billing Portal, webhook
+- **Subscription** — Stripe Checkout at **$4.99/month**, Billing Portal, webhook
   → D1. Passwordless auth (emailed code → session JWT).
 - Landing, Science, Account (no gamification), plain-English Privacy. PWA.
 
@@ -99,7 +99,7 @@ own local schema too: `wrangler d1 migrations apply cadenzia-db --local`.
    apply the schema: `wrangler d1 migrations apply cadenzia-db --remote`
    (creates the tables and the `play_counter` seed row — see
    [`migrations/0001_init.sql`](migrations/0001_init.sql)).
-2. **Stripe (test mode first)** — create a $2.99/month recurring price; set
+2. **Stripe (test mode first)** — create a $4.99/month recurring price; set
    `STRIPE_PRICE_ID`. Add a webhook to `/api/subscription/webhook` and set
    `STRIPE_WEBHOOK_SECRET`.
 3. **Cloudflare R2 + KV** — create the R2 bucket and a KV namespace; put the KV
