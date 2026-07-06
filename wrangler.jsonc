@@ -68,4 +68,6 @@
   // Secrets (set with `wrangler secret put NAME`, never commit):
   //   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID,
   //   RESEND_API_KEY, APP_URL, JWT_SECRET
+  //   STRIPE_MANAGED_PAYMENTS — "true" turns on Stripe Managed Payments
+  //   (merchant of record); leave unset until activated + verified (see .env.example).
 }
