@@ -53,28 +53,19 @@ export async function checkout(request, env) {
     await updateRows(env, 'users', { id: claims.sub }, { stripe_customer_id: customerId });
   }
 
-  const params = {
+  const session = await stripe(env, 'checkout/sessions', {
     mode: 'subscription',
     customer: customerId,
     'line_items': { 0: { price: env.STRIPE_PRICE_ID, quantity: 1 } },
+    // Stripe Managed Payments: Stripe is the merchant of record and files/remits
+    // sales tax itself. Always on — Cadenzia sells exclusively via Managed
+    // Payments. Requires the product to carry a Managed-Payments-eligible tax code
+    // (txcd_10401200 — "Digital Audio Works – streamed – subscription").
+    'managed_payments': { enabled: true },
     success_url: `${env.APP_URL}/account?checkout=success`,
     cancel_url: `${env.APP_URL}/app`,
     'client_reference_id': claims.sub,
-  };
-
-  // Stripe Managed Payments = Stripe becomes merchant of record and files/remits
-  // sales tax itself. Gated by a flag so this stays INERT until we (1) activate
-  // Managed Payments in the Dashboard and pass Stripe's eligibility review, and
-  // (2) set the product's tax code to a Managed-Payments-eligible one
-  // (txcd_10401200 — "Digital Audio Works – streamed – subscription"). Before
-  // flipping STRIPE_MANAGED_PAYMENTS=true in production, verify in TEST mode that
-  // a completed checkout still fires customer.subscription.created and flips
-  // subscription_status to 'active' in the webhook below.
-  if (env.STRIPE_MANAGED_PAYMENTS === 'true') {
-    params['managed_payments'] = { enabled: true };
-  }
-
-  const session = await stripe(env, 'checkout/sessions', params);
+  });
 
   return json({ url: session.url }, { env });
 }
