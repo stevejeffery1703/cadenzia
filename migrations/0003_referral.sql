@@ -23,3 +23,7 @@ CREATE TABLE IF NOT EXISTS referrals (
   invitee_id TEXT UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
+
+-- countReferrals() runs on every /me (for the invite UI) and on each signup (the
+-- reward cap), both filtering by referrer_id — index it.
+CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id);

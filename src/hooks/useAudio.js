@@ -37,7 +37,7 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
   const intentRef = useRef(false); // whether we intend to be playing (bg recovery)
   const canControlVolumeRef = useRef(true); // false on iOS, where volume is fixed
   const playedRef = useRef(0); // seconds actually played of the current track
-  const countedRef = useRef(false); // whether this load's completion was recorded
+  const completionsRef = useRef(0); // loop completions already recorded this load
 
   const [track, setTrack] = useState(null);
   const [playing, setPlaying] = useState(false);
@@ -147,10 +147,7 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
     const onEnded = () => {
       if (el.loop) return; // native loop re-plays; 'ended' won't fire, but be safe
       const t = trackRef.current;
-      if (t && !countedRef.current) {
-        countedRef.current = true;
-        cbRef.current.onTrackComplete?.(t);
-      }
+      cbRef.current.onTrackComplete?.(t);
       const n = t ? nextInCategory(t.id) : null;
       if (n) {
         loadTrackRef.current?.(n, { autoplay: true });
@@ -185,15 +182,20 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
   useEffect(() => {
     if (!playing) return undefined;
     const id = setInterval(() => {
-      // Played-time accumulator. Looping tracks (Deep Focus, Calm) never fire
-      // 'ended', so a "completion" — what recordPlay/recordSession count — is
-      // taken once the elapsed play time passes the track's nominal length.
-      // countedRef guards against counting a track twice (accumulator + 'ended').
+      const el = elRef.current;
       const t = trackRef.current;
-      playedRef.current += 1;
-      if (t && !countedRef.current && t.durationSeconds && playedRef.current >= t.durationSeconds) {
-        countedRef.current = true;
-        cbRef.current.onTrackComplete?.(t);
+      // Looping tracks (Deep Focus, Calm) never fire 'ended', so count each
+      // completed loop from accumulated play time — advancing tracks complete via
+      // 'ended' instead. Guarded on !el.paused so a stalled or dev-404 stream
+      // (which leaves `playing` optimistically true) can't "finish" a track in
+      // silence, and so an hour of looping records real time, not one play.
+      if (t && t.loop && t.durationSeconds && el && !el.paused) {
+        playedRef.current += 1;
+        const completed = Math.floor(playedRef.current / t.durationSeconds);
+        while (completionsRef.current < completed) {
+          completionsRef.current += 1;
+          cbRef.current.onTrackComplete?.(t);
+        }
       }
       setElapsed((prev) => {
         const next = prev + 1;
@@ -207,6 +209,10 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
   const play = useCallback(() => {
     const el = elRef.current;
     if (!el || !el.src) return;
+    // Drop any in-flight fade (e.g. the gate's fade-out) so its queued el.pause()
+    // can't land after we resume — otherwise tapping "Continue free" mid-fade
+    // would fade in and then abruptly stop.
+    cancelFade();
     intentRef.current = true;
     setPlaying(true);
     applyVolume(0);
@@ -220,7 +226,7 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
       .catch(() => {
         /* placeholder masters 404 in dev — the session UI still runs */
       });
-  }, [applyVolume, fadeTo, updateMediaSession]);
+  }, [applyVolume, cancelFade, fadeTo, updateMediaSession]);
 
   const pause = useCallback(() => {
     const el = elRef.current;
@@ -284,7 +290,7 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
         el.currentTime = 0;
         applyVolume(0);
         playedRef.current = 0; // fresh completion accounting for the new track
-        countedRef.current = false;
+        completionsRef.current = 0;
 
         setTrack(nextTrack);
         setLoop(!!nextTrack.loop);

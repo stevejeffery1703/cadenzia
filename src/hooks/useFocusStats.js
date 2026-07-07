@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getCategory } from '../utils/tracks';
+import { todayKey } from '../utils/day';
 
 // Focus stats — the quiet record of what a listener has actually done, kept so
 // they can share it as a small, understated achievement ("3 hours of deep focus
@@ -15,11 +16,6 @@ const KEY = 'cad_focus_v1';
 // offering to share.
 export const MIN_HEADLINE_SECONDS = 20 * 60;
 
-function today() {
-  const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-}
-
 function load() {
   let stored = {};
   try {
@@ -28,7 +24,7 @@ function load() {
     stored = {};
   }
   const allTime = stored.allTime || {};
-  if (stored.day !== today()) return { day: today(), today: {}, allTime };
+  if (stored.day !== todayKey()) return { day: todayKey(), today: {}, allTime };
   return { day: stored.day, today: stored.today || {}, allTime };
 }
 
@@ -65,7 +61,8 @@ export function useFocusStats() {
   const addSecond = useCallback((categoryId) => {
     if (!categoryId) return;
     setState((prev) => {
-      const base = prev.day === today() ? prev : { day: today(), today: {}, allTime: prev.allTime };
+      const base =
+        prev.day === todayKey() ? prev : { day: todayKey(), today: {}, allTime: prev.allTime };
       return {
         day: base.day,
         today: { ...base.today, [categoryId]: (base.today[categoryId] || 0) + 1 },
@@ -74,8 +71,11 @@ export function useFocusStats() {
     });
   }, []);
 
-  // Today's categories, most-focused first.
-  const byCategoryToday = Object.entries(state.today)
+  // Today's categories, most-focused first. Guard against a stale carry-over
+  // across midnight: only surface today's data if the stored day is still today
+  // (the next addSecond tick resets the store).
+  const todayData = state.day === todayKey() ? state.today : {};
+  const byCategoryToday = Object.entries(todayData)
     .map(([categoryId, seconds]) => ({ categoryId, seconds }))
     .sort((a, b) => b.seconds - a.seconds);
 

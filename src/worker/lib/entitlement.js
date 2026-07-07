@@ -58,8 +58,11 @@ export async function ensureReferralCode(env, user) {
       await updateRows(env, 'users', { id: user.id }, { referral_code: code });
       user.referral_code = code;
       return code;
-    } catch {
-      /* unique collision — try another code */
+    } catch (err) {
+      // Only a code collision is worth retrying. Anything else (a missing column
+      // pre-migration, a D1 outage) must surface rather than be masked by three
+      // more doomed writes and a silent null.
+      if (!/unique/i.test(String(err && err.message))) throw err;
     }
   }
   return null;

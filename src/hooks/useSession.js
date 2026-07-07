@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FREE_DAILY_MINUTES } from '../utils/config';
+import { todayKey } from '../utils/day';
 
 // Free-tier daily gate.
 //
@@ -16,13 +17,6 @@ import { FREE_DAILY_MINUTES } from '../utils/config';
 
 const KEY = 'cad_daily_v1';
 
-// A stable local-day stamp ("2026-7-6"). Local time on purpose: "resets each
-// day" should mean the listener's own midnight, not UTC.
-function today() {
-  const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-}
-
 function load() {
   let stored = {};
   try {
@@ -31,7 +25,7 @@ function load() {
     stored = {};
   }
   // A new day wipes the slate — seconds and the "continue free today" unlock.
-  if (stored.day !== today()) return { day: today(), seconds: 0, unlocked: false };
+  if (stored.day !== todayKey()) return { day: todayKey(), seconds: 0, unlocked: false };
   return { day: stored.day, seconds: stored.seconds || 0, unlocked: !!stored.unlocked };
 }
 
@@ -42,10 +36,23 @@ export function useSession({ isSubscriber = false } = {}) {
     localStorage.setItem(KEY, JSON.stringify(state));
   }, [state]);
 
+  // Roll the day over when the tab is left open across midnight and brought back
+  // to the foreground. Without this a listener gated yesterday stays gated today:
+  // playback is paused at the gate, so the addSecond tick that would reset the
+  // day never fires, and they'd be stuck until a manual refresh.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.hidden) return;
+      setState((prev) => (prev.day === todayKey() ? prev : load()));
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+
   const addSecond = useCallback(() => {
     setState((prev) => {
       // Roll over live if the clock crosses midnight mid-session.
-      if (prev.day !== today()) return { day: today(), seconds: 1, unlocked: false };
+      if (prev.day !== todayKey()) return { day: todayKey(), seconds: 1, unlocked: false };
       return { ...prev, seconds: prev.seconds + 1 };
     });
   }, []);
@@ -56,18 +63,25 @@ export function useSession({ isSubscriber = false } = {}) {
     setState((prev) => ({ ...prev, unlocked: true }));
   }, []);
 
+  // Derive against the *current* day, so a stale carry-over from before midnight
+  // (no tick has rolled it yet) reads as a fresh, ungated day rather than
+  // yesterday's used-up one.
+  const fresh = state.day === todayKey();
+  const seconds = fresh ? state.seconds : 0;
+  const unlocked = fresh ? state.unlocked : false;
+
   const limitSeconds = FREE_DAILY_MINUTES * 60;
-  const minutesListened = Math.floor(state.seconds / 60);
+  const minutesListened = Math.floor(seconds / 60);
   const minutesRemaining = Math.max(0, FREE_DAILY_MINUTES - minutesListened);
 
   // Subscribers, and free listeners who chose "continue free today", are never gated.
-  const gateReached = !isSubscriber && !state.unlocked && state.seconds >= limitSeconds;
+  const gateReached = !isSubscriber && !unlocked && seconds >= limitSeconds;
 
   return {
     minutesListened,
     minutesRemaining,
     gateReached,
-    unlocked: state.unlocked || isSubscriber,
+    unlocked: unlocked || isSubscriber,
     addSecond,
     unlockSession,
   };
