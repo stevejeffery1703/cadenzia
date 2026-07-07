@@ -58,12 +58,15 @@ A warm, editorial, **light** aesthetic — gallery paper, not a dark app.
   synthetic ambient waveform (no analyser — nothing routes through Web Audio, which
   iOS suspends on background/lock). Large artwork, minimal controls, session timer.
   Library + now-playing + session panel, bottom sheet on mobile.
-- **Free tier** — unlimited for the first hour of any session; then a calm
-  interstitial offers *share to continue* or *subscribe*, equal weight
-  ([`src/hooks/useSession.js`](src/hooks/useSession.js),
-  [`src/components/ShareInterstitial.jsx`](src/components/ShareInterstitial.jsx)).
-- **Sharing** — Web Share API with the artwork card, platform-intent fallbacks
-  (X/LinkedIn/Facebook). Honor system: unlock on share-sheet open, no verification.
+- **Free tier** — an hour of open listening per day (pooled across sessions,
+  resets at local midnight); then a calm interstitial offers *subscribe* or
+  *continue free today* ([`src/hooks/useSession.js`](src/hooks/useSession.js),
+  [`src/components/GateInterstitial.jsx`](src/components/GateInterstitial.jsx)).
+- **Sharing** — offered as a personal achievement ("3 hours of deep focus") on
+  positive surfaces, plus a two-sided referral where both sides get a free week
+  ([`src/components/FocusShare.jsx`](src/components/FocusShare.jsx),
+  [`src/components/InviteFriend.jsx`](src/components/InviteFriend.jsx)). Web Share
+  API with the artwork card, platform-intent fallbacks (X/LinkedIn/Facebook).
 - **Play counter** — honest social proof, D1-backed, atomically incremented
   on track completion, held back below a threshold
   ([`src/components/PlayCounter.jsx`](src/components/PlayCounter.jsx)).

@@ -7,13 +7,18 @@
 import { json } from '../middleware/cors.js';
 import { authedUser, sign } from '../lib/jwt.js';
 import { selectOne } from '../lib/db.js';
+import { isPremium } from '../lib/entitlement.js';
 
 export async function link(request, env) {
   const claims = await authedUser(request, env);
   if (!claims) return json({ error: 'Sign in first' }, { status: 401, env });
 
-  const user = await selectOne(env, 'users', { id: claims.sub }, ['subscription_status']);
-  if (user?.subscription_status !== 'active') {
+  // Paid subscribers and comp-Premium (referral) users alike may download.
+  const user = await selectOne(env, 'users', { id: claims.sub }, [
+    'subscription_status',
+    'premium_until',
+  ]);
+  if (!isPremium(user)) {
     return json({ error: 'Downloads are a subscriber benefit' }, { status: 403, env });
   }
 

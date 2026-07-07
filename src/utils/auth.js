@@ -9,8 +9,14 @@ export async function signInWithEmail(email) {
 }
 
 export async function exchangeToken(otp, email) {
-  const data = await api('/auth/verify', { method: 'POST', body: { otp, email } });
-  if (data && data.token) setToken(data.token);
+  // A pending referral tag (captured from ?ref= on first visit) rides along with
+  // the sign-in, so a new account can be credited to whoever invited them.
+  const ref = localStorage.getItem('cad_ref') || undefined;
+  const data = await api('/auth/verify', { method: 'POST', body: { otp, email, ref } });
+  if (data && data.token) {
+    setToken(data.token);
+    localStorage.removeItem('cad_ref'); // consumed, or irrelevant to a returning user
+  }
   return data;
 }
 

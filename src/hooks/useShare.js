@@ -3,21 +3,19 @@ import { APP_NAME, APP_URL } from '../utils/config';
 import { deviceId } from '../utils/api';
 import { buildShareCard } from '../utils/shareCard';
 
-// Sharing — honor system, by design. We unlock as soon as the share sheet opens
-// and never try to verify a post went out. Verified sharing would mean OAuth per
-// platform and login friction on the free tier; not worth it for an indie
-// product, and the friction would cost more trust than the occasional unearned
-// unlock. What makes sharing worth doing is the artwork in the card, not the gate.
+// Sharing the artwork — the real growth mechanism. Offered on positive surfaces
+// as a quiet achievement ("3 hours of deep focus"), never as a toll at the gate.
+//
+// The share URL carries a referral tag: a signed-in listener's own referral code
+// when available (so a friend who follows it and signs up earns both of them a
+// free week — see the referral flow), otherwise an anonymous device tag that
+// still attributes the visit but grants no reward.
 
-const CAPTION = 'Listening with Cadenzia';
-
-function refUrl() {
-  return `${APP_URL}?ref=${encodeURIComponent(deviceId())}`;
+function refUrl(refCode) {
+  return `${APP_URL}?ref=${encodeURIComponent(refCode || deviceId())}`;
 }
 
-function intent(platform) {
-  const url = refUrl();
-  const text = CAPTION;
+function intent(platform, text, url) {
   if (platform === 'x') {
     return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
   }
@@ -30,65 +28,60 @@ function intent(platform) {
   return url;
 }
 
-export function useShare({ onUnlocked } = {}) {
+export function useShare({ refCode } = {}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
   const canNativeShare =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
+  const caption = (headline) => (headline ? `${headline} — ${APP_NAME}` : APP_NAME);
+
   // Web Share API path — preferred where available. Carries the artwork card.
-  const shareNative = useCallback(
-    async (track) => {
+  const share = useCallback(
+    async ({ seed, style, headline } = {}) => {
       setBusy(true);
       setError(null);
       try {
         let files;
         try {
-          if (track) {
-            const card = await buildShareCard(track);
-            if (card.file && navigator.canShare && navigator.canShare({ files: [card.file] })) {
-              files = [card.file];
-            }
+          const card = await buildShareCard({ seed, style, headline });
+          if (card.file && navigator.canShare && navigator.canShare({ files: [card.file] })) {
+            files = [card.file];
           }
         } catch (err) {
-          // Share still proceeds without the image — the honor-system unlock
-          // doesn't depend on it — but the artwork is the actual growth
-          // mechanism, so a silent failure here is worth knowing about.
+          // Share still proceeds without the image, but the artwork is the actual
+          // growth mechanism, so a silent failure here is worth knowing about.
           console.error('[useShare] Share-card render failed, sharing without artwork:', err);
         }
         await navigator.share({
           title: APP_NAME,
-          text: CAPTION,
-          url: refUrl(),
+          text: caption(headline),
+          url: refUrl(refCode),
           ...(files ? { files } : {}),
         });
-        onUnlocked?.(); // honor system — opening the sheet continues the session
         return true;
       } catch (e) {
-        // A user cancelling the sheet still counts — we don't punish the choice.
-        if (e && e.name === 'AbortError') {
-          onUnlocked?.();
-          return true;
-        }
+        // Cancelling the sheet is a normal choice, not an error to surface.
+        if (e && e.name === 'AbortError') return false;
         setError('That share did not open. Try another way below.');
         return false;
       } finally {
         setBusy(false);
       }
     },
-    [onUnlocked]
+    [refCode]
   );
 
-  // Platform fallback — open the composer in a new tab, then unlock.
+  // Platform fallback — open the composer in a new tab (no image attachment;
+  // web-intent composers don't accept one).
   const shareTo = useCallback(
-    (platform) => {
-      window.open(intent(platform), '_blank', 'noopener');
-      onUnlocked?.();
+    (platform, { headline } = {}) => {
+      window.open(intent(platform, caption(headline), refUrl(refCode)), '_blank', 'noopener');
       return true;
     },
-    [onUnlocked]
+    [refCode]
   );
 
-  return { shareNative, shareTo, canNativeShare, busy, error };
+  return { share, shareTo, canNativeShare, busy, error };
 }

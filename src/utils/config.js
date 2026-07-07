@@ -11,10 +11,21 @@ export const PRICE = {
   short: '$4.99/mo',
 };
 
-// Free tier: unlimited listening for the first hour of any session. After that,
-// one share (or a subscription) continues the session. This is per-session — it
-// resets whenever a new session begins, not on a daily clock.
-export const FREE_SESSION_MINUTES = 60;
+// Free tier: an hour of open listening every day, pooled across sessions and
+// tracks. When the day's hour is used up, one calm choice — subscribe, or
+// continue free for the rest of today. Resets at local midnight. Accounting is
+// first-party functional storage (localStorage), not tracking.
+export const FREE_DAILY_MINUTES = 60;
+
+// The daily gate fades the music out rather than cutting it. On devices that
+// honour programmatic volume (desktop/Android) this is a real fade; on iOS,
+// where volume is fixed, the player detects that and stops cleanly instead —
+// harmless, since the looping categories are transient-free washes.
+export const GATE_FADE_SECONDS = 6;
+
+// Two-sided referral: an invited friend and the person who invited them each
+// get this many days of Premium. (Enforced server-side; this is for UI copy.)
+export const REFERRAL_REWARD_DAYS = 7;
 
 // Subscriber downloads remain playable offline for this many days.
 export const DOWNLOAD_EXPIRY_DAYS = 30;

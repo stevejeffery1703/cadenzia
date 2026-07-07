@@ -5,7 +5,7 @@
 // — each track's `id` is the deterministic seed (see utils/artwork.js).
 //
 // Access model: every track is available on the free tier. Listening is gated by
-// time, not by track — see FREE_SESSION_MINUTES and the session interstitial.
+// time, not by track — see FREE_DAILY_MINUTES and the daily gate interstitial.
 
 import { AUDIO_BASE } from './config';
 
@@ -20,7 +20,10 @@ export const CATEGORIES = [
     tagline: 'For the work that needs all of you.',
     description:
       'Dark, still, and very deep — then carried forward on one unbroken line. For sustained concentration and long stretches of momentum: code, prose, proofs, the problem that does not yield quickly.',
-    loop: false,
+    // Loops seamlessly. Deep Focus is the "disappear into the work" category —
+    // any change, even a clean advance, is a small interruption to a deep state,
+    // and the material is featureless enough that a seamless loop is unnoticed.
+    loop: true,
   },
   {
     id: 'energy',
@@ -55,34 +58,39 @@ export const CATEGORIES = [
 ];
 
 // Track names and descriptions, in the brand voice. Per category, in order.
+// The third value is the master's length in seconds. Deep Focus and Calm loop,
+// so they're short seamless segments (~8–12 min) — length is invisible when the
+// loop is seamless, and a shorter loop is far cheaper to master cleanly. Energy
+// and Creativity auto-advance and have real character, so they're longer,
+// through-composed pieces (~15–22 min) where a loop would be noticed.
 const LIBRARY = {
   'deep-focus': [
-    ['Fathom', 'A slow descent into clear, deep water. For the work that needs all of you.', 1560],
-    ['Undertow', 'A quiet pressure that pulls you down into the problem, and through it.', 1740],
-    ['Throughline', 'Everything connects. The work moves as one long, certain gesture.', 1800],
-    ['Current', 'Caught in the flow and moving with it. Effort becomes motion.', 1560],
-    ['The Deep', 'Far below the noise. For the deepest and longest stretches of thought.', 2040],
+    ['Fathom', 'A slow descent into clear, deep water. For the work that needs all of you.', 600],
+    ['Undertow', 'A quiet pressure that pulls you down into the problem, and through it.', 660],
+    ['Throughline', 'Everything connects. The work moves as one long, certain gesture.', 720],
+    ['Current', 'Caught in the flow and moving with it. Effort becomes motion.', 600],
+    ['The Deep', 'Far below the noise. For the deepest and longest stretches of thought.', 720],
   ],
   energy: [
-    ['Overture', 'The first bars before the work begins. Clean, structured, awake.', 1320],
-    ['First Light', 'Momentum without noise. For the start of a serious day.', 1440],
-    ['Ascent', 'Rising and deliberate. Energy you can think through.', 1500],
-    ['Ignition', 'The spark before motion. Precise and ready.', 1260],
-    ['Prelude', 'Poised at the edge of the work. Begin.', 1380],
+    ['Overture', 'The first bars before the work begins. Clean, structured, awake.', 960],
+    ['First Light', 'Momentum without noise. For the start of a serious day.', 1020],
+    ['Ascent', 'Rising and deliberate. Energy you can think through.', 1080],
+    ['Ignition', 'The spark before motion. Precise and ready.', 900],
+    ['Prelude', 'Poised at the edge of the work. Begin.', 1020],
   ],
   creativity: [
-    ['Constellation', 'Points of light finding their lines. For the open, generative hours.', 1440],
-    ['Ideation', 'Loose, bright, unhurried. Room for the thought you have not had yet.', 1560],
-    ['Synthesis', 'Separate things becoming one idea. For design, strategy, invention.', 1680],
-    ['Lattice', 'Structure emerging from possibility — connections you did not plan.', 1500],
-    ['Aperture', 'Wide open. Let the unexpected in.', 1380],
+    ['Constellation', 'Points of light finding their lines. For the open, generative hours.', 1080],
+    ['Ideation', 'Loose, bright, unhurried. Room for the thought you have not had yet.', 1140],
+    ['Synthesis', 'Separate things becoming one idea. For design, strategy, invention.', 1200],
+    ['Lattice', 'Structure emerging from possibility — connections you did not plan.', 1020],
+    ['Aperture', 'Wide open. Let the unexpected in.', 960],
   ],
   calm: [
-    ['Vespers', 'Candlelight through silk. A soft place to set the work down.', 1800],
-    ['Stillpoint', 'The quiet centre. The breath slows and the day softens.', 1920],
-    ['Reverie', 'Warm and diffuse. For light reading and gentle recovery.', 1680],
-    ['Lull', 'Everything dissolves into everything else. Nothing sharp remains.', 2100],
-    ['Soften', 'The edges go. What is left is calm.', 1740],
+    ['Vespers', 'Candlelight through silk. A soft place to set the work down.', 660],
+    ['Stillpoint', 'The quiet centre. The breath slows and the day softens.', 720],
+    ['Reverie', 'Warm and diffuse. For light reading and gentle recovery.', 600],
+    ['Lull', 'Everything dissolves into everything else. Nothing sharp remains.', 720],
+    ['Soften', 'The edges go. What is left is calm.', 660],
   ],
 };
 

@@ -10,6 +10,12 @@
 import { json } from '../middleware/cors.js';
 import { sign, authedUser } from '../lib/jwt.js';
 import { selectOne, insertRow, deleteRows, getListeningStats } from '../lib/db.js';
+import {
+  isPremium,
+  ensureReferralCode,
+  applyReferralOnSignup,
+  countReferrals,
+} from '../lib/entitlement.js';
 import { isRateLimited } from '../lib/rateLimit.js';
 import { sendEmail, emailShell } from './email.js';
 
@@ -61,7 +67,7 @@ export async function magicLink(request, env) {
 }
 
 export async function verify(request, env) {
-  const { email, otp } = await request.json();
+  const { email, otp, ref } = await request.json();
   if (!email || !otp) return json({ error: 'Email and code required' }, { status: 400, env });
 
   const normalizedEmail = email.toLowerCase();
@@ -71,8 +77,9 @@ export async function verify(request, env) {
   }
   await env.SESSIONS.delete(`otp:${normalizedEmail}`);
 
-  // Upsert the user.
+  // Upsert the user. A brand-new account is what a referral rewards.
   let user = await selectOne(env, 'users', { email: normalizedEmail });
+  const isNewUser = !user;
   if (!user) {
     user = await insertRow(env, 'users', {
       email: normalizedEmail,
@@ -80,11 +87,24 @@ export async function verify(request, env) {
     });
   }
 
+  await ensureReferralCode(env, user);
+  if (isNewUser) {
+    // Grants Premium to the new listener (and their inviter). Best-effort — a
+    // referral hiccup must never block a valid sign-in.
+    try {
+      await applyReferralOnSignup(env, ref, user);
+    } catch (err) {
+      console.error(`[auth.verify] Referral apply failed for ${user.id}: ${err.stack || err}`);
+    }
+  }
+
   const token = await sign({ sub: user.id, email: user.email }, env.JWT_SECRET, {
     expiresInSeconds: 60 * 60 * 24 * 30, // 30 days
   });
 
-  return json({ token, user: publicUser(user) }, { env });
+  // Re-read so the response reflects any Premium the referral just granted.
+  const fresh = (await selectOne(env, 'users', { id: user.id })) || user;
+  return json({ token, user: publicUser(fresh) }, { env });
 }
 
 export async function me(request, env) {
@@ -94,9 +114,12 @@ export async function me(request, env) {
   const user = await selectOne(env, 'users', { id: claims.sub });
   if (!user) return json({ error: 'Not found' }, { status: 404, env });
 
-  // Only subscribers see the stats panel, so skip the query otherwise.
-  const stats = user.subscription_status === 'active' ? await getListeningStats(env, user.id) : null;
-  return json(publicUser(user, stats), { env });
+  await ensureReferralCode(env, user); // backfill codes for pre-referral accounts
+
+  // Premium (paid or comp) sees the stats panel; skip the query otherwise.
+  const stats = isPremium(user) ? await getListeningStats(env, user.id) : null;
+  const referralCount = await countReferrals(env, user.id);
+  return json(publicUser(user, { stats, referralCount }), { env });
 }
 
 export async function deleteAccount(request, env) {
@@ -124,17 +147,23 @@ export async function deleteAccount(request, env) {
   // one delete; explicit here so it's obvious what's removed.)
   await deleteRows(env, 'listening_sessions', { user_id: claims.sub });
   await deleteRows(env, 'subscriptions', { user_id: claims.sub });
+  await deleteRows(env, 'referrals', { referrer_id: claims.sub });
+  await deleteRows(env, 'referrals', { invitee_id: claims.sub });
   await deleteRows(env, 'email_subscribers', { email: claims.email });
   await deleteRows(env, 'users', { id: claims.sub });
 
   return json({ ok: true }, { env });
 }
 
-function publicUser(user, stats = null) {
+function publicUser(user, { stats = null, referralCount = 0 } = {}) {
   return {
     id: user.id,
     email: user.email,
-    subscription_status: user.subscription_status || 'free',
+    subscription_status: user.subscription_status || 'free', // raw Stripe status
+    premium_until: user.premium_until || null,
+    is_premium: isPremium(user),
+    referral_code: user.referral_code || null,
+    referral_count: referralCount,
     stats,
   };
 }

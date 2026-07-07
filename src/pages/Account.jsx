@@ -6,13 +6,25 @@ import { api } from '../utils/api';
 import { useEmailSignIn } from '../hooks/useEmailSignIn';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import StatsPanel from '../components/StatsPanel';
+import InviteFriend from '../components/InviteFriend';
 import { PRICE } from '../utils/config';
+
+// A comp-Premium expiry, shown plainly ("July 13").
+function formatDate(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+  } catch {
+    return '';
+  }
+}
 
 // Account. Minimal by design — sign in, subscription, history for subscribers,
 // and a plainly available way to delete everything.
 export default function Account({ subscription }) {
   useDocumentHead('/account');
-  const { user, isSubscriber, refresh, sessionExpired } = subscription;
+  const { user, isSubscriber, stripeActive, premiumUntil, referralCode, referralCount, refresh, sessionExpired } =
+    subscription;
   const signIn = useEmailSignIn({ onVerified: refresh });
   const [params, setParams] = useSearchParams();
   const [justSubscribed, setJustSubscribed] = useState(false);
@@ -95,7 +107,7 @@ export default function Account({ subscription }) {
     <main className="page-enter mx-auto max-w-3xl px-6 py-16">
       {justSubscribed && (
         <p className="mb-8 rounded-lg border border-line bg-paper-wash p-4 text-sm text-ink-soft">
-          Thank you — you're subscribed. No more hourly pause.
+          Thank you — you're subscribed. No more daily limit.
         </p>
       )}
       <div className="flex items-center justify-between">
@@ -126,12 +138,22 @@ export default function Account({ subscription }) {
 
       <section className="panel mt-12 p-7">
         <h2 className="font-display text-2xl text-ink">Subscription</h2>
-        {isSubscriber ? (
+        {stripeActive ? (
           <>
             <p className="mt-2 text-sm text-ink-soft">Active — {PRICE.label}. Thank you for the support.</p>
             <button onClick={openBillingPortal} className="btn-ghost mt-5">
               Manage billing
             </button>
+          </>
+        ) : isSubscriber ? (
+          <>
+            <p className="mt-2 text-sm text-ink-soft">
+              Premium from referrals — active until {formatDate(premiumUntil)}. Subscribe to keep it
+              going without a gap.
+            </p>
+            <a href="/app?subscribe=1" className="btn-primary mt-5 inline-flex">
+              Subscribe — {PRICE.label}
+            </a>
           </>
         ) : (
           <>
@@ -142,6 +164,8 @@ export default function Account({ subscription }) {
           </>
         )}
       </section>
+
+      <InviteFriend referralCode={referralCode} referralCount={referralCount} />
 
       <section className="mt-12">
         <h2 className="text-label text-ink-soft">Delete account</h2>
