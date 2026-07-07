@@ -13,7 +13,7 @@ import { selectOne, insertRow, deleteRows, getListeningStats } from '../lib/db.j
 import {
   isPremium,
   ensureReferralCode,
-  applyReferralOnSignup,
+  grantWelcomePremium,
   countReferrals,
 } from '../lib/entitlement.js';
 import { isRateLimited } from '../lib/rateLimit.js';
@@ -88,13 +88,14 @@ export async function verify(request, env) {
   }
 
   await ensureReferralCode(env, user);
+  let welcome = null;
   if (isNewUser) {
-    // Grants Premium to the new listener (and their inviter). Best-effort — a
-    // referral hiccup must never block a valid sign-in.
+    // Grant the free first week (doubled for a referred signup). Best-effort — a
+    // hiccup here must never block a valid sign-in.
     try {
-      await applyReferralOnSignup(env, ref, user);
+      welcome = await grantWelcomePremium(env, ref, user);
     } catch (err) {
-      console.error(`[auth.verify] Referral apply failed for ${user.id}: ${err.stack || err}`);
+      console.error(`[auth.verify] Welcome grant failed for ${user.id}: ${err.stack || err}`);
     }
   }
 
@@ -102,9 +103,10 @@ export async function verify(request, env) {
     expiresInSeconds: 60 * 60 * 24 * 30, // 30 days
   });
 
-  // Re-read so the response reflects any Premium the referral just granted.
+  // Re-read so the response reflects the Premium just granted. `welcome` tells the
+  // client which greeting to show — a free first week, or a friend's two.
   const fresh = (await selectOne(env, 'users', { id: user.id })) || user;
-  return json({ token, user: publicUser(fresh) }, { env });
+  return json({ token, user: publicUser(fresh), welcome }, { env });
 }
 
 export async function me(request, env) {
