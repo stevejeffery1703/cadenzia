@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useSearchParams } from 'react-router-dom';
 import Nav from './components/Nav';
 import Home from './pages/Home';
 import AppPage from './pages/AppPage';
@@ -18,6 +18,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <RouteProgress />
+      <ReferralCapture />
       <Nav isSubscriber={subscription.isSubscriber} isSignedIn={!!subscription.user} />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -30,6 +31,21 @@ export default function App() {
       </Routes>
     </BrowserRouter>
   );
+}
+
+// Captures a referral tag from ?ref= on first arrival and stashes it locally
+// (first-touch — an existing pending tag isn't overwritten), then cleans it out
+// of the URL. It's redeemed later, at sign-up (see utils/auth.exchangeToken).
+function ReferralCapture() {
+  const [params, setParams] = useSearchParams();
+  useEffect(() => {
+    const ref = params.get('ref');
+    if (!ref) return;
+    if (!localStorage.getItem('cad_ref')) localStorage.setItem('cad_ref', ref);
+    params.delete('ref');
+    setParams(params, { replace: true });
+  }, [params, setParams]);
+  return null;
 }
 
 // A single thin gold line at the top of the viewport on navigation — the only

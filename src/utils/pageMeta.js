@@ -12,7 +12,7 @@ export const PAGE_META = {
   '/app': {
     title: 'Listen — Cadenzia',
     description:
-      'Stream deep focus, energy, creativity, and calm audio — free for the first hour of every session.',
+      'Stream deep focus, energy, creativity, and calm audio — free for an hour every day.',
   },
   '/science': {
     title: 'The science, plainly — Cadenzia',

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCategory, nextTrack as nextInCategory } from '../utils/tracks';
-import { APP_NAME, FADE_IN_SECONDS, CROSSFADE_SECONDS } from '../utils/config';
+import { APP_NAME, FADE_IN_SECONDS, CROSSFADE_SECONDS, GATE_FADE_SECONDS } from '../utils/config';
 
 // Playback engine.
 //
@@ -35,6 +35,9 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
   const elRef = useRef(null); // the single <audio> element
   const fadeRef = useRef(0); // active volume-tween rAF id
   const intentRef = useRef(false); // whether we intend to be playing (bg recovery)
+  const canControlVolumeRef = useRef(true); // false on iOS, where volume is fixed
+  const playedRef = useRef(0); // seconds actually played of the current track
+  const countedRef = useRef(false); // whether this load's completion was recorded
 
   const [track, setTrack] = useState(null);
   const [playing, setPlaying] = useState(false);
@@ -75,7 +78,10 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
       if (!el) return;
       cancelFade();
       const target = fraction * volumeRef.current;
-      if (document.hidden || seconds <= 0) {
+      // Jump instantly when there's nothing to animate: hidden pages freeze rAF,
+      // and where volume is fixed (iOS) a timed ramp would just hold the current
+      // level and then jump anyway — so collapse it to a clean set/stop.
+      if (document.hidden || seconds <= 0 || !canControlVolumeRef.current) {
         applyVolume(target);
         onDone?.();
         return;
@@ -124,6 +130,14 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
     // could otherwise taint/break plain playback.
     elRef.current = el;
 
+    // Probe once whether programmatic volume actually works. iOS pins element
+    // volume under hardware control, so fades there must degrade to a clean cut
+    // (see fadeTo) rather than a pointless "hold full, then stop". Set a value,
+    // read it back, restore.
+    el.volume = 0.5;
+    canControlVolumeRef.current = el.volume !== 1;
+    el.volume = 1;
+
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
     const onTime = () => {
@@ -133,7 +147,10 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
     const onEnded = () => {
       if (el.loop) return; // native loop re-plays; 'ended' won't fire, but be safe
       const t = trackRef.current;
-      cbRef.current.onTrackComplete?.(t);
+      if (t && !countedRef.current) {
+        countedRef.current = true;
+        cbRef.current.onTrackComplete?.(t);
+      }
       const n = t ? nextInCategory(t.id) : null;
       if (n) {
         loadTrackRef.current?.(n, { autoplay: true });
@@ -168,9 +185,19 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
   useEffect(() => {
     if (!playing) return undefined;
     const id = setInterval(() => {
+      // Played-time accumulator. Looping tracks (Deep Focus, Calm) never fire
+      // 'ended', so a "completion" — what recordPlay/recordSession count — is
+      // taken once the elapsed play time passes the track's nominal length.
+      // countedRef guards against counting a track twice (accumulator + 'ended').
+      const t = trackRef.current;
+      playedRef.current += 1;
+      if (t && !countedRef.current && t.durationSeconds && playedRef.current >= t.durationSeconds) {
+        countedRef.current = true;
+        cbRef.current.onTrackComplete?.(t);
+      }
       setElapsed((prev) => {
         const next = prev + 1;
-        cbRef.current.onTick?.(next);
+        cbRef.current.onTick?.(next, t);
         return next;
       });
     }, 1000);
@@ -184,11 +211,16 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
     setPlaying(true);
     applyVolume(0);
     el.play()
-      .then(() => fadeTo(1, FADE_IN_SECONDS))
+      .then(() => {
+        // Restore the track's own metadata — resuming after the gate replaces
+        // the "free hour is up" lock-screen notice with the now-playing piece.
+        updateMediaSession(trackRef.current);
+        fadeTo(1, FADE_IN_SECONDS);
+      })
       .catch(() => {
         /* placeholder masters 404 in dev — the session UI still runs */
       });
-  }, [applyVolume, fadeTo]);
+  }, [applyVolume, fadeTo, updateMediaSession]);
 
   const pause = useCallback(() => {
     const el = elRef.current;
@@ -204,6 +236,39 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
     });
   }, [fadeTo]);
 
+  // The daily gate. Fade the music down gently over a few seconds where volume
+  // is controllable; where it isn't (iOS), fadeTo collapses this to an immediate
+  // clean stop — harmless, since the looping categories are transient-free.
+  const pauseForGate = useCallback(() => {
+    const el = elRef.current;
+    intentRef.current = false;
+    setPlaying(false);
+    if (!el) return;
+    fadeTo(0, GATE_FADE_SECONDS, () => {
+      try {
+        el.pause();
+      } catch {
+        /* no-op */
+      }
+    });
+  }, [fadeTo]);
+
+  // Explain the pause on the lock screen / media controls, for a listener who's
+  // backgrounded when the gate lands and won't see the on-screen interstitial.
+  const announceGate = useCallback(() => {
+    if (!('mediaSession' in navigator)) return;
+    try {
+      // eslint-disable-next-line no-undef
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: 'Your free hour is up for today',
+        artist: 'Open Cadenzia to keep listening',
+        album: APP_NAME,
+      });
+    } catch {
+      /* MediaMetadata unavailable — non-fatal */
+    }
+  }, []);
+
   // Load a track on the single element. If something is already playing, dip the
   // volume out, swap the source, then fade back in — a clean transition with no
   // overlap (see the header note on why we don't overlap-crossfade).
@@ -218,6 +283,8 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
         el.loop = !!nextTrack.loop;
         el.currentTime = 0;
         applyVolume(0);
+        playedRef.current = 0; // fresh completion accounting for the new track
+        countedRef.current = false;
 
         setTrack(nextTrack);
         setLoop(!!nextTrack.loop);
@@ -324,6 +391,8 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
     loadTrack,
     play,
     pause,
+    pauseForGate,
+    announceGate,
     toggle,
     skipNext,
     toggleLoop,

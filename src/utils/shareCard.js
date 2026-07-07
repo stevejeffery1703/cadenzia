@@ -1,9 +1,9 @@
 // Builds the share card — a genuinely good-looking image, because the artwork is
-// the real growth mechanism, not the gate. Full-bleed generated artwork with a
-// quiet wordmark and a plain caption. No hype, nothing that reads as an ad.
+// the real growth mechanism, not the gate. Full-bleed generated artwork with the
+// listener's own quiet achievement over it ("3 hours of deep focus") and a small
+// wordmark. Personal and understated — nothing that reads as an ad.
 
 import { artworkSVG, svgToPngDataUrl } from './artwork';
-import { getCategory } from './tracks';
 import { APP_NAME } from './config';
 
 const SIZE = 1080;
@@ -20,9 +20,29 @@ async function ensureFonts() {
   }
 }
 
-export async function buildShareCard(track) {
-  const category = getCategory(track.categoryId);
-  const svg = artworkSVG({ seed: track.seed, style: category?.style, width: SIZE, height: SIZE, animate: false });
+// Wrap the headline onto at most two lines so a longer achievement
+// ("1 hour 30 minutes of creativity") never overflows the card.
+function wrap(ctx, text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word;
+    if (ctx.measureText(next).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = next;
+    }
+  }
+  if (line) lines.push(line);
+  return lines.slice(0, 2);
+}
+
+// `headline` is the achievement line; `seed`/`style` pick the artwork. All
+// optional — with no headline the card falls back to a plain wordmark.
+export async function buildShareCard({ seed, style, headline } = {}) {
+  const svg = artworkSVG({ seed, style, width: SIZE, height: SIZE, animate: false });
   const { dataUrl: artUrl } = await svgToPngDataUrl(svg, SIZE);
   await ensureFonts();
 
@@ -41,22 +61,30 @@ export async function buildShareCard(track) {
   ctx.drawImage(art, 0, 0, SIZE, SIZE);
 
   // Scrim so the type sits cleanly over the lower third — fade to warm paper.
-  const scrim = ctx.createLinearGradient(0, SIZE * 0.55, 0, SIZE);
+  const scrim = ctx.createLinearGradient(0, SIZE * 0.5, 0, SIZE);
   scrim.addColorStop(0, 'rgba(245,241,232,0)');
-  scrim.addColorStop(1, 'rgba(245,241,232,0.96)');
+  scrim.addColorStop(1, 'rgba(245,241,232,0.97)');
   ctx.fillStyle = scrim;
-  ctx.fillRect(0, SIZE * 0.55, SIZE, SIZE * 0.45);
+  ctx.fillRect(0, SIZE * 0.5, SIZE, SIZE * 0.5);
 
-  // Wordmark, in ink.
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#232019';
-  ctx.font = '300 108px "Spectral", Georgia, serif';
-  ctx.fillText(APP_NAME, SIZE / 2, SIZE - 150);
 
-  // Caption — plain, no hype.
-  ctx.fillStyle = '#6B6358';
-  ctx.font = '400 30px "Hanken Grotesk", sans-serif';
-  ctx.fillText('Listening with Cadenzia', SIZE / 2, SIZE - 90);
+  if (headline) {
+    // The achievement is the hero; the wordmark sits quietly beneath it.
+    ctx.fillStyle = '#232019';
+    ctx.font = '300 60px "Spectral", Georgia, serif';
+    const lines = wrap(ctx, headline, SIZE - 160);
+    const baseY = SIZE - (lines.length > 1 ? 175 : 150);
+    lines.forEach((ln, i) => ctx.fillText(ln, SIZE / 2, baseY + i * 68));
+
+    ctx.fillStyle = '#6B6358';
+    ctx.font = '400 26px "Hanken Grotesk", sans-serif';
+    ctx.fillText(`with ${APP_NAME}`, SIZE / 2, SIZE - 70);
+  } else {
+    ctx.fillStyle = '#232019';
+    ctx.font = '300 108px "Spectral", Georgia, serif';
+    ctx.fillText(APP_NAME, SIZE / 2, SIZE - 120);
+  }
 
   const dataUrl = canvas.toDataURL('image/png');
   const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));

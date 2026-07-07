@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { getMe } from '../utils/auth';
 import { getToken, setToken } from '../utils/api';
 
-// Resolves the current user's subscription status from the Worker, which checks
-// D1 (kept in sync by the Stripe webhook). Anonymous users are simply
-// "free". Cached in memory; refreshed on mount and on demand.
+// Resolves the current user's Premium status from the Worker, which checks D1
+// (kept in sync by the Stripe webhook, plus any comp/referral grant). "Premium"
+// means paid OR comped; the raw Stripe status is kept separately so the account
+// page can tell a billing subscriber apart from a referral-comped one. Anonymous
+// users are simply "free". Cached in memory; refreshed on mount and on demand.
 export function useSubscription() {
   const [user, setUser] = useState(null);
   const [status, setStatus] = useState('free'); // 'free' | 'active' | 'loading'
@@ -25,7 +27,8 @@ export function useSubscription() {
     try {
       const me = await getMe();
       setUser(me);
-      setStatus(me && me.subscription_status === 'active' ? 'active' : 'free');
+      // Effective entitlement: paid or comped. is_premium is computed server-side.
+      setStatus(me && me.is_premium ? 'active' : 'free');
       setSessionExpired(false);
     } catch (err) {
       if (err.status === 401) {
@@ -47,6 +50,12 @@ export function useSubscription() {
     user,
     isSubscriber: status === 'active',
     status,
+    // True only for a paying Stripe subscriber (has a billing portal); a comped
+    // referral user is a subscriber for access, but not this.
+    stripeActive: user?.subscription_status === 'active',
+    premiumUntil: user?.premium_until || null,
+    referralCode: user?.referral_code || null,
+    referralCount: user?.referral_count || 0,
     loading,
     sessionExpired,
     refresh,

@@ -44,7 +44,9 @@ export default function Library({ currentTrackId, onPlay }) {
                       >
                         {track.name}
                       </span>
-                      <span className="text-caption">{formatDuration(track.durationSeconds)}</span>
+                      <span className="text-caption">
+                        {track.loop ? 'Loops seamlessly' : formatDuration(track.durationSeconds)}
+                      </span>
                     </span>
                     {active && <PlayingDot />}
                   </button>

@@ -4,12 +4,14 @@ import { getCategory } from '../utils/tracks';
 import { APP_NAME } from '../utils/config';
 import { useAudio, formatTime } from '../hooks/useAudio';
 import { useSession } from '../hooks/useSession';
+import { useFocusStats } from '../hooks/useFocusStats';
 import { recordPlay } from '../utils/plays';
 import { recordSession } from '../utils/sessions';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import Library from '../components/Library';
 import Player from '../components/Player';
-import ShareInterstitial from '../components/ShareInterstitial';
+import FocusShare from '../components/FocusShare';
+import GateInterstitial from '../components/GateInterstitial';
 import SubscribeModal from '../components/SubscribeModal';
 
 // The player. Library on the left, now-playing in the centre, session on the
@@ -17,16 +19,19 @@ import SubscribeModal from '../components/SubscribeModal';
 // never mid-track beyond the natural pause.
 export default function AppPage({ subscription }) {
   useDocumentHead('/app');
-  const { isSubscriber, user } = subscription;
+  const { isSubscriber, user, referralCode } = subscription;
   const [showGate, setShowGate] = useState(false);
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [params, setParams] = useSearchParams();
 
   const session = useSession({ isSubscriber });
+  const focus = useFocusStats();
 
   const audio = useAudio({
-    onTick: () => {
+    onTick: (_, track) => {
+      // Focus stats count for everyone; the gate clock only for free listeners.
+      if (track) focus.addSecond(track.categoryId);
       if (!isSubscriber) session.addSecond();
     },
     onTrackComplete: (track) => {
@@ -50,10 +55,13 @@ export default function AppPage({ subscription }) {
     }
   }, [params, setParams]);
 
-  // Cross the hour → pause at the next second and offer the calm choice.
+  // Cross the day's hour → fade the music down gently and offer the calm choice.
+  // announceGate leaves a lock-screen note for a listener who's backgrounded and
+  // won't see the interstitial until they return.
   useEffect(() => {
     if (session.gateReached && audio.playing) {
-      audio.pause();
+      audio.pauseForGate();
+      audio.announceGate();
       setShowGate(true);
     }
   }, [session.gateReached, audio.playing, audio]);
@@ -85,7 +93,14 @@ export default function AppPage({ subscription }) {
 
         {/* Session — right on desktop only. */}
         <aside className="hidden lg:block">
-          <SessionPanel audio={audio} session={session} category={category} isSubscriber={isSubscriber} />
+          <SessionPanel
+            audio={audio}
+            session={session}
+            focus={focus}
+            category={category}
+            isSubscriber={isSubscriber}
+            referralCode={referralCode}
+          />
         </aside>
       </div>
 
@@ -112,13 +127,14 @@ export default function AppPage({ subscription }) {
         </div>
       )}
 
-      <ShareInterstitial
+      <GateInterstitial
         open={showGate}
         track={audio.track}
         onClose={() => setShowGate(false)}
-        onUnlocked={() => {
+        onContinue={() => {
           session.unlockSession();
           setShowGate(false);
+          audio.play(); // resume the piece the gate faded down
         }}
         onSubscribe={() => {
           setShowGate(false);
@@ -133,7 +149,7 @@ export default function AppPage({ subscription }) {
 
 // Quiet session readout. Current piece, time in session, and an optional notes
 // field — no gamification, no streaks.
-function SessionPanel({ audio, session, category, isSubscriber }) {
+function SessionPanel({ audio, session, focus, category, isSubscriber, referralCode }) {
   const [notes, setNotes] = useState(() => localStorage.getItem('cad_notes') || '');
   useEffect(() => {
     localStorage.setItem('cad_notes', notes);
@@ -154,11 +170,15 @@ function SessionPanel({ audio, session, category, isSubscriber }) {
         {!isSubscriber && (
           <p className="text-caption mt-1">
             {session.minutesRemaining > 0
-              ? `${session.minutesRemaining} min of open listening left`
-              : 'Share to continue this session'}
+              ? `${session.minutesRemaining} min of free listening left today`
+              : session.unlocked
+                ? 'Listening free for the rest of today'
+                : 'Free hour used for today'}
           </p>
         )}
       </div>
+
+      {focus.headline && <FocusShare headline={focus.headline} refCode={referralCode} />}
 
       <div>
         <label htmlFor="notes" className="text-label text-ink-soft">

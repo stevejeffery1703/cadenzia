@@ -16,9 +16,9 @@ export default function Terms() {
       </p>
 
       <Section title="The deal">
-        Every track is free to stream. Each session gives you an hour of open listening; after that,
-        share the artwork or subscribe to keep going. Subscribing removes the wait entirely and adds
-        offline downloads.
+        Every track is free to stream. Each day gives you an hour of open listening; after that,
+        subscribe to keep going, or come back tomorrow. Subscribing removes the limit entirely and
+        adds offline downloads.
       </Section>
 
       <Section title="Billing">

@@ -20,7 +20,8 @@ Source of truth for the categories and track list is
 | **Artwork** | `depth` — deep-water contours | `score` — abstracted staff | `constellation` — scattered notes | `candlelight` — warm washes |
 | **Visual density** | Highest | Structured / geometric | Sparse, airy | Near-empty, blurred |
 | **Warmth (clay↔pine)** | Coolest (deep glow only) | Warm gold accent | Cool-bright | Warmest, clay-dominant |
-| **Loops seamlessly** | No | No | No | **Yes** (`loop:true`) |
+| **Length** | ~8–12 min loop | ~15–22 min | ~15–22 min | ~8–12 min loop |
+| **Loops seamlessly** | **Yes** (`loop:true`) | No | No | **Yes** (`loop:true`) |
 
 ---
 
@@ -29,12 +30,40 @@ Source of truth for the categories and track list is
 **Shared rules (all four):** instrumental only, no vocals or spoken word, no recognisable
 melodic hook that grabs the ear. Nothing sudden — no drops, risers, impacts, or silence
 gaps; evolution is gradual only. Maintain a steady spectral floor so the track masks room
-noise. Mono-compatible mix, gentle high-shelf roll-off to prevent fatigue over 25+ minutes,
-controlled low end. Master every track to the **same loudness** (target ~-17 LUFS
-integrated, tight true-peak ceiling) so switching between them never jars. Lengths ~22–35
-min to match the durations in `tracks.js`. The player crossfades 3s on auto-advance, so
-every track should **begin and end at low energy** for clean transitions — and Calm must
-additionally loop seamlessly.
+noise. Mono-compatible mix, gentle high-shelf roll-off to prevent fatigue over long
+sessions, controlled low end. Master every track to the **same loudness** (target ~-17 LUFS
+integrated, tight true-peak ceiling) so switching between them never jars.
+
+### Loops, lengths, and fades
+
+Which categories loop decides everything else, so settle it first. It follows from one
+fact about the player: it's a single bare `<audio>` element (for reliable iOS background
+playback), so there's **no live layering or generative variation** — the only tools for
+"length without boredom" are one long file or auto-advancing files.
+
+- **Deep Focus & Calm loop** (`loop:true`). They're the "disappear into the work"
+  categories — the least eventful, so a seamless loop goes unnoticed, and looping
+  guarantees *zero* mid-work change. Master them as **short, seamless ~8–12 min segments**:
+  length is invisible once the loop is seamless, and a short loop is far cheaper to master
+  cleanly than 30 unique minutes. The loop join must be an **equal-energy splice** — the end
+  flows into the start at the same level, phase-aligned, no transient. **Bake no fades into a
+  looping master:** a baked fade-in or -out replays at the loop point and dips every pass.
+- **Energy & Creativity auto-advance** through their five pieces. They have real character
+  (pulse, arpeggios), so a loop would be caught. Master them as **longer, through-composed
+  ~15–22 min pieces**, and **bake a gentle fade-in (~2s) and fade-out (~4–6s)** into each,
+  keeping the first/last ~8s low-energy so the player's 3s dip on auto-advance lands cleanly
+  everywhere, iOS included.
+
+Fades at *playback boundaries* (first play, the daily gate, a manual stop) are the player's
+job where it can, and the material's where it can't:
+
+- On desktop/Android the player ramps element volume — real fades.
+- On **iOS the OS pins element volume**, so the player detects that and **stops cleanly**
+  rather than pretend-fading. For the looping categories that's harmless — they're
+  transient-free, so a drone simply ceases. If on-device testing ever shows the cut is too
+  abrupt, give each looping track a short **outro file** (5–8s, starting at loop level,
+  baked fade to silence) that the player can swap to at the gate for a true fade. Kept in
+  reserve — don't build it unless testing calls for it.
 
 ### Deep Focus — "for the work that needs all of you"
 - **Energy:** low-arousal but *dense and immersive* — calm surface, deep pull. Sustained, never sleepy.
@@ -77,9 +106,10 @@ If generating with AI tools (Suno/Udio etc.), specify "instrumental, no vocals" 
 time** — they add lyrics otherwise — at the tempos/timbres above. Those tools cap at short
 clips, so the realistic pipeline is: generate a strong 1–3 min seed per track, then
 extend/layer/loop it to full length in a DAW, apply the shared master chain (high-shelf
-roll-off, gentle bus compression, unified LUFS), and hand-craft a clean loop point for the
-Calm tracks. Keep every master's opening and closing 5–10s low so the 3s crossfade lands
-cleanly.
+roll-off, gentle bus compression, unified LUFS), and hand-craft a **seamless, equal-energy
+loop point for the Deep Focus and Calm tracks**. For the auto-advancing Energy and
+Creativity tracks, bake the gentle fade-in/-out and keep the opening and closing 5–10s low
+so the 3s dip on advance lands cleanly (see *Loops, lengths, and fades* above).
 
 ---
 
