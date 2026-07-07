@@ -23,9 +23,10 @@ export const FREE_DAILY_MINUTES = 60;
 // harmless, since the looping categories are transient-free washes.
 export const GATE_FADE_SECONDS = 6;
 
-// Two-sided referral: an invited friend and the person who invited them each
-// get this many days of Premium. (Enforced server-side; this is for UI copy.)
-export const REFERRAL_REWARD_DAYS = 7;
+// Free-trial lengths (enforced server-side; these are for UI copy). Every new
+// account gets a first week of Premium; a referred signup gets two.
+export const INTRO_TRIAL_DAYS = 7;
+export const REFERRED_TRIAL_DAYS = 14;
 
 // Subscriber downloads remain playable offline for this many days.
 export const DOWNLOAD_EXPIRY_DAYS = 30;

@@ -11,6 +11,7 @@ import { useDocumentHead } from '../hooks/useDocumentHead';
 import Library from '../components/Library';
 import Player from '../components/Player';
 import FocusShare from '../components/FocusShare';
+import WelcomeBanner from '../components/WelcomeBanner';
 import GateInterstitial from '../components/GateInterstitial';
 import SubscribeModal from '../components/SubscribeModal';
 
@@ -83,6 +84,7 @@ export default function AppPage({ subscription }) {
           a heading, but the page still needs one real h1 that doesn't change
           every time a track is picked or skipped (see Player.jsx's h2). */}
       <h1 className="sr-only">Listen — {APP_NAME}</h1>
+      <WelcomeBanner />
       <div className="grid gap-10 lg:grid-cols-[300px_1fr_260px]">
         {/* Library — left on desktop, bottom sheet on mobile. */}
         <aside className="hidden lg:block">

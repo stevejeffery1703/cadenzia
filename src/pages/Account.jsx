@@ -148,8 +148,8 @@ export default function Account({ subscription }) {
         ) : isSubscriber ? (
           <>
             <p className="mt-2 text-sm text-ink-soft">
-              Premium from referrals — active until {formatDate(premiumUntil)}. Subscribe to keep it
-              going without a gap.
+              You’re on your free Premium trial — active until {formatDate(premiumUntil)}. Subscribe
+              to keep it going without a gap.
             </p>
             <a href="/app?subscribe=1" className="btn-primary mt-5 inline-flex">
               Subscribe — {PRICE.label}

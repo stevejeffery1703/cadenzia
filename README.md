@@ -58,12 +58,17 @@ A warm, editorial, **light** aesthetic — gallery paper, not a dark app.
   synthetic ambient waveform (no analyser — nothing routes through Web Audio, which
   iOS suspends on background/lock). Large artwork, minimal controls, session timer.
   Library + now-playing + session panel, bottom sheet on mobile.
-- **Free tier** — an hour of open listening per day (pooled across sessions,
-  resets at local midnight); then a calm interstitial offers *subscribe* or
-  *continue free today* ([`src/hooks/useSession.js`](src/hooks/useSession.js),
+- **Free first week** — every new account gets 7 days of Premium; a referred
+  signup gets 14 (granted as comp `premium_until`, see
+  [`src/worker/lib/entitlement.js`](src/worker/lib/entitlement.js)). A
+  [`WelcomeBanner`](src/components/WelcomeBanner.jsx) greets them once.
+- **Free tier** — after the trial, an hour of open listening per day (pooled
+  across sessions, resets at local midnight); then a calm interstitial offers
+  *subscribe* or *continue free today* ([`src/hooks/useSession.js`](src/hooks/useSession.js),
   [`src/components/GateInterstitial.jsx`](src/components/GateInterstitial.jsx)).
 - **Sharing** — offered as a personal achievement ("3 hours of deep focus") on
-  positive surfaces, plus a two-sided referral where both sides get a free week
+  positive surfaces; the invite link gives a friend a doubled first week, with
+  nothing dangled in return — generosity, not a personal incentive
   ([`src/components/FocusShare.jsx`](src/components/FocusShare.jsx),
   [`src/components/InviteFriend.jsx`](src/components/InviteFriend.jsx)). Web Share
   API with the artwork card, platform-intent fallbacks (X/LinkedIn/Facebook).

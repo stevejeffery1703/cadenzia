@@ -1,11 +1,33 @@
-import { useState } from 'react';
-import { APP_URL, REFERRAL_REWARD_DAYS } from '../utils/config';
+import { useEffect, useState } from 'react';
+import { APP_URL } from '../utils/config';
 
-// Invite a friend — the real referral, and the actual growth engine: a targeted
-// invite with a reward on both sides, and a taste of Premium that converts far
-// better than a gate ever could. Decoupled from the daily limit on purpose.
+const SEEN_KEY = 'cad_ref_seen';
+
+// Invite a friend — framed as generosity, not a personal incentive. Everyone's
+// first week on Cadenzia is free; a friend you invite gets two. Nothing is
+// dangled in return — just their join count and, when one joins, a quiet
+// thank-you. (The "two weeks" copy mirrors REFERRED_TRIAL_DAYS on the Worker.)
 export default function InviteFriend({ referralCode, referralCount = 0 }) {
   const [copied, setCopied] = useState(false);
+  const [justJoined, setJustJoined] = useState(false);
+
+  // A one-time "a friend joined" acknowledgment the first time the count grows
+  // since it was last viewed — a small thank-you, no push/email needed. referralCode
+  // and referralCount arrive together (same /me payload), so when this runs with a
+  // code present the count is already the real value, not a mid-load zero.
+  useEffect(() => {
+    if (!referralCode) return;
+    const raw = localStorage.getItem(SEEN_KEY);
+    if (raw === null) {
+      localStorage.setItem(SEEN_KEY, String(referralCount)); // baseline; celebrate nothing yet
+      return;
+    }
+    if (referralCount > Number(raw)) {
+      setJustJoined(true);
+      localStorage.setItem(SEEN_KEY, String(referralCount));
+    }
+  }, [referralCode, referralCount]);
+
   if (!referralCode) return null;
 
   const link = `${APP_URL}?ref=${referralCode}`;
@@ -21,11 +43,17 @@ export default function InviteFriend({ referralCode, referralCount = 0 }) {
 
   return (
     <section className="panel mt-12 p-7">
-      <h2 className="font-display text-2xl text-ink">Invite a friend</h2>
+      <h2 className="font-display text-2xl text-ink">Give a friend a head start</h2>
       <p className="mt-2 text-sm text-ink-soft">
-        Share your link. When a friend joins through it, you both get {REFERRAL_REWARD_DAYS} days of
-        Premium — uninterrupted listening and offline downloads.
+        Everyone’s first week on Cadenzia is free. A friend you invite gets two — double the usual
+        welcome, and a better start than anyone else gets. Nothing asked in return.
       </p>
+
+      {justJoined && (
+        <p className="mt-4 rounded-lg border border-accent/40 bg-paper-wash p-3 text-sm text-ink">
+          A friend just joined through your link — thank you for sharing Cadenzia.
+        </p>
+      )}
 
       <div className="mt-5 flex gap-2">
         <input
