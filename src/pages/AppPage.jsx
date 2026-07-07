@@ -14,15 +14,17 @@ import FocusShare from '../components/FocusShare';
 import WelcomeBanner from '../components/WelcomeBanner';
 import GateInterstitial from '../components/GateInterstitial';
 import SubscribeModal from '../components/SubscribeModal';
+import FreeWeekModal from '../components/FreeWeekModal';
 
 // The player. Library on the left, now-playing in the centre, session on the
 // right. The one-hour free gate surfaces as a calm interstitial — never a wall,
 // never mid-track beyond the natural pause.
 export default function AppPage({ subscription }) {
   useDocumentHead('/app');
-  const { isSubscriber, user, referralCode } = subscription;
+  const { isSubscriber, user, referralCode, refresh } = subscription;
   const [showGate, setShowGate] = useState(false);
   const [showSubscribe, setShowSubscribe] = useState(false);
+  const [showFreeWeek, setShowFreeWeek] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [params, setParams] = useSearchParams();
 
@@ -132,11 +134,16 @@ export default function AppPage({ subscription }) {
       <GateInterstitial
         open={showGate}
         track={audio.track}
+        isSignedIn={!!user}
         onClose={() => setShowGate(false)}
         onContinue={() => {
           session.unlockSession();
           setShowGate(false);
           audio.play(); // resume the piece the gate faded down
+        }}
+        onStartFreeWeek={() => {
+          setShowGate(false);
+          setShowFreeWeek(true);
         }}
         onSubscribe={() => {
           setShowGate(false);
@@ -145,6 +152,18 @@ export default function AppPage({ subscription }) {
       />
 
       <SubscribeModal open={showSubscribe} onClose={() => setShowSubscribe(false)} />
+
+      <FreeWeekModal
+        open={showFreeWeek}
+        onClose={() => setShowFreeWeek(false)}
+        onVerified={async () => {
+          // Signing up granted the free week server-side — refresh status so the
+          // gate lifts, then resume the piece the gate paused.
+          await refresh();
+          setShowFreeWeek(false);
+          audio.play();
+        }}
+      />
     </main>
   );
 }
