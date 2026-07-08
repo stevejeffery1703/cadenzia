@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { startCheckout } from '../utils/stripe';
 import { getToken } from '../utils/api';
 import { useEmailSignIn } from '../hooks/useEmailSignIn';
-import { PRICE, APP_NAME, DOWNLOAD_EXPIRY_DAYS } from '../utils/config';
+import { PRICE, APP_NAME } from '../utils/config';
 
 // The paid tier, presented quietly. No card fields here — the Worker creates a
 // Stripe Checkout Session and we hand off to Stripe's secure page. If the listener
@@ -45,9 +45,8 @@ export default function SubscribeModal({ open, onClose }) {
       >
         <h2 className="text-h2 text-ink">Uninterrupted.</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          No daily limit, and downloads that stay with you offline for{' '}
-          {DOWNLOAD_EXPIRY_DAYS} days. It keeps playing while you work in other apps or your screen
-          sleeps.
+          No daily limit — uninterrupted focus for as long as you work. It keeps playing while you
+          work in other apps or your screen sleeps, and new tracks are added regularly.
         </p>
 
         <div className="mt-6 flex items-baseline gap-2 border-y border-line py-4">

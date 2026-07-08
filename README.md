@@ -58,26 +58,28 @@ A warm, editorial, **light** aesthetic — gallery paper, not a dark app.
   synthetic ambient waveform (no analyser — nothing routes through Web Audio, which
   iOS suspends on background/lock). Large artwork, minimal controls, session timer.
   Library + now-playing + session panel, bottom sheet on mobile.
-- **Free first week** — every new account gets 7 days of Premium; a referred
-  signup gets 14 (granted as comp `premium_until`, see
-  [`src/worker/lib/entitlement.js`](src/worker/lib/entitlement.js)). A
-  [`WelcomeBanner`](src/components/WelcomeBanner.jsx) greets them once.
-- **Free tier** — after the trial, an hour of open listening per day (pooled
-  across sessions, resets at local midnight); then a calm interstitial offers
-  *subscribe* or *continue free today* ([`src/hooks/useSession.js`](src/hooks/useSession.js),
+- **Two tiers** — Free is an hour of open listening per day, no account needed
+  (pooled across sessions, resets at local midnight); then a calm interstitial
+  offers *subscribe* or *continue free today* ([`src/hooks/useSession.js`](src/hooks/useSession.js),
   [`src/components/GateInterstitial.jsx`](src/components/GateInterstitial.jsx)).
+  **Premium ($4.99/mo) removes the daily limit** — unlimited, uninterrupted
+  streaming. (Streaming-only — no file downloads; reliable offline on iOS would
+  need a native wrapper, deferred as a post-launch decision.)
 - **Sharing** — offered as a personal achievement ("3 hours of deep focus") on
-  positive surfaces; the invite link gives a friend a doubled first week, with
-  nothing dangled in return — generosity, not a personal incentive
-  ([`src/components/FocusShare.jsx`](src/components/FocusShare.jsx),
-  [`src/components/InviteFriend.jsx`](src/components/InviteFriend.jsx)). Web Share
-  API with the artwork card, platform-intent fallbacks (X/LinkedIn/Facebook).
+  positive surfaces, never at the gate: a plain link with the artwork card, Web
+  Share API plus platform-intent fallbacks (X/LinkedIn/Facebook)
+  ([`src/components/FocusShare.jsx`](src/components/FocusShare.jsx)).
 - **Play counter** — honest social proof, D1-backed, atomically incremented
   on track completion, held back below a threshold
   ([`src/components/PlayCounter.jsx`](src/components/PlayCounter.jsx)).
-- **Subscription** — Stripe Checkout at **$4.99/month**, Billing Portal, webhook
-  → D1. Passwordless auth (emailed code → session JWT).
-- Landing, Science, Account (no gamification), plain-English Privacy. PWA.
+- **Subscription** — Stripe Checkout at **$4.99/month** (Stripe is merchant of
+  record via Managed Payments), Billing Portal, signature-verified webhook → D1.
+  Passwordless auth (emailed code → session JWT).
+- **Audio origin** — streamed from R2 through the Worker with HTTP Range support
+  (seeking + iOS background playback), gated by a short-lived signed cookie the
+  app sets on each HTML load so the catalogue isn't hotlinkable or grabbable by a
+  bare URL ([`src/worker/index.js`](src/worker/index.js)).
+- Landing, Science, Account (no gamification), plain-English Privacy + Terms. PWA.
 
 > Audio files are **placeholders** — `tracks.js` points at `/audio/<id>.mp3`.
 > Generate real instrumental masters suited to each category and upload them to

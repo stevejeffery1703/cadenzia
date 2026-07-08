@@ -35,15 +35,15 @@ export default function GateInterstitial({
 
         <h2 className="text-h2 text-ink">That's your free {label} for today.</h2>
         <p className="mx-auto mt-4 max-w-md text-ink-soft">
-          Subscribe for uninterrupted focus and offline downloads — or keep listening free for the
-          rest of today. Your free {label} returns tomorrow.
+          Subscribe for uninterrupted focus, all day — or keep listening free for the rest of today.
+          Your free {label} returns tomorrow.
         </p>
 
         <div className="mt-10 grid gap-4 text-left sm:grid-cols-2">
           <div className="panel flex flex-col p-6">
             <h3 className="font-display text-xl text-ink">Subscribe</h3>
             <p className="mt-2 flex-1 text-sm text-ink-soft">
-              Uninterrupted focus, and every track offline. {PRICE.label}.
+              No daily limit, ever — focus for as long as you work. {PRICE.label}.
             </p>
             <button type="button" onClick={onSubscribe} className="btn-primary mt-5 w-full">
               Subscribe — {PRICE.label}

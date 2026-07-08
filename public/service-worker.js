@@ -1,6 +1,6 @@
 // Cadenzia service worker.
 // Goals: installable PWA + offline shell. Audio streams from R2 and is
-// intentionally NOT cached here (large files; paid downloads handled separately).
+// intentionally NOT cached here (large files, and each request is cookie-gated).
 // Background playback is driven by the <audio> element + Media Session API in
 // the page, which the OS keeps alive while audio is playing.
 

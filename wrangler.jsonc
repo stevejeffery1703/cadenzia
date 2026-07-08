@@ -30,7 +30,9 @@
     "run_worker_first": true
   },
 
-  // Audio masters live in R2 and are served via CDN (public read for streaming).
+  // Audio masters live in R2 and are streamed ONLY through the Worker (/audio/*),
+  // which cookie-gates each request. The bucket must NOT have public access
+  // (no r2.dev URL / public custom domain) or that gate is bypassable.
   "r2_buckets": [
     {
       "binding": "AUDIO_BUCKET",

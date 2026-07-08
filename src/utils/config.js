@@ -23,9 +23,6 @@ export const FREE_DAILY_MINUTES = 60;
 // harmless, since the looping categories are transient-free washes.
 export const GATE_FADE_SECONDS = 6;
 
-// Subscriber downloads remain playable offline for this many days.
-export const DOWNLOAD_EXPIRY_DAYS = 30;
-
 // The play counter is honest social proof — but a tiny number reads as the
 // opposite. Hold the element back until total plays clear this threshold.
 export const PLAY_COUNTER_THRESHOLD = 500;

@@ -1,14 +1,16 @@
 // Cloudflare Worker entry point.
 // - Serves the built React app via the ASSETS binding (configured in wrangler).
 // - Handles the JSON API under /api/*.
-// - Streams audio under /audio/* from R2 (public read).
+// - Streams audio under /audio/* from R2, gated by a short-lived signed cookie
+//   the app sets on every HTML load (see serveStaticOrNotFound / serveAudio) so
+//   the catalogue isn't hotlinkable or downloadable by a bare URL.
 //
 // Secrets are read from `env` (set with `wrangler secret put`). Never hardcoded.
 
 import { handlePreflight, json } from './middleware/cors.js';
+import { sign, verify } from './lib/jwt.js';
 import * as auth from './routes/auth.js';
 import * as subscription from './routes/subscription.js';
-import * as download from './routes/download.js';
 import * as email from './routes/email.js';
 import * as plays from './routes/plays.js';
 import { PAGE_META } from '../utils/pageMeta.js';
@@ -34,8 +36,6 @@ const ROUTES = {
   'POST /api/plays/increment': plays.increment,
   'GET /api/plays/count': plays.count,
 
-  'POST /api/download/link': download.link,
-
   'POST /api/email/subscribe': email.subscribe,
   'GET /api/email/unsubscribe': email.unsubscribe,
   'POST /api/email/unsubscribe': email.unsubscribePost,
@@ -47,7 +47,8 @@ export default {
 
     if (request.method === 'OPTIONS') return handlePreflight(env);
 
-    // Audio streaming from R2 (public read; no auth needed for free streaming).
+    // Audio streaming from R2, gated by the stream cookie (free to obtain — any
+    // app load mints one — but it stops hotlinking and bare-URL downloads).
     if (url.pathname.startsWith('/audio/')) {
       return serveAudio(request, url, env);
     }
@@ -92,10 +93,39 @@ async function serveStaticOrNotFound(request, url, env) {
   const isHtmlShell = (response.headers.get('content-type') || '').includes('text/html');
   if (!isHtmlShell) return response;
 
-  if (!KNOWN_ROUTES.has(url.pathname)) {
-    return new Response(response.body, { status: 404, headers: response.headers });
-  }
-  return rewriteMetaForPath(response, url.pathname);
+  const base = !KNOWN_ROUTES.has(url.pathname)
+    ? new Response(response.body, { status: 404, headers: response.headers })
+    : rewriteMetaForPath(response, url.pathname);
+
+  // Mint/refresh the stream cookie on every HTML load, so it's already set before
+  // the app requests any /audio and playback carries it automatically (see
+  // serveAudio). Re-wrap so the headers are mutable — a transformed or fetched
+  // response's Headers can be read-only.
+  const html = new Response(base.body, { status: base.status, headers: base.headers });
+  html.headers.append('Set-Cookie', await mintStreamCookie(env));
+  return html;
+}
+
+// A short-lived signed token, carried in an HttpOnly cookie. It isn't a real
+// access boundary — free streaming means any visitor's app load mints one — it
+// just makes the catalogue not-trivially-rippable: a bare /audio URL, a hotlink
+// from another site, or a scripted grab without first loading the app all 403.
+async function mintStreamCookie(env) {
+  const maxAge = 60 * 60 * 24 * 7; // 7 days, refreshed on each HTML load
+  const token = await sign({ kind: 'stream' }, env.JWT_SECRET, { expiresInSeconds: maxAge });
+  return `cad_stream=${token}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Lax`;
+}
+
+function cookieValue(header, name) {
+  const m = (header || '').match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+async function hasStreamCookie(request, env) {
+  const token = cookieValue(request.headers.get('Cookie'), 'cad_stream');
+  if (!token) return false;
+  const payload = await verify(token, env.JWT_SECRET);
+  return !!payload && payload.kind === 'stream';
 }
 
 function rewriteMetaForPath(response, path) {
@@ -122,6 +152,12 @@ function rewriteMetaForPath(response, path) {
 // parses the Range and conditional headers for us when we hand it the request
 // headers; we just have to shape the response.
 async function serveAudio(request, url, env) {
+  // Gate on the stream cookie the app sets on load. A request that never went
+  // through the app (bare URL, hotlink, scripted grab) won't have it → 403.
+  if (!(await hasStreamCookie(request, env))) {
+    return new Response('Forbidden', { status: 403 });
+  }
+
   const objectKey = decodeURIComponent(url.pathname.replace('/audio/', ''));
 
   // HEAD: metadata only — advertise range support and the size, no body.
@@ -164,7 +200,9 @@ function audioHeaders(object) {
   const headers = new Headers();
   object.writeHttpMetadata(headers);
   headers.set('etag', object.httpEtag);
-  headers.set('Cache-Control', 'public, max-age=3600');
+  // `private` so only the end-user's browser caches it — a shared cache must not
+  // serve the audio to a request that hasn't passed the cookie gate above.
+  headers.set('Cache-Control', 'private, max-age=3600');
   headers.set('Accept-Ranges', 'bytes');
   return headers;
 }

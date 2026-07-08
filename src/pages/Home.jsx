@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '../utils/tracks';
-import { APP_NAME, PRICE, DOWNLOAD_EXPIRY_DAYS } from '../utils/config';
+import { APP_NAME, PRICE } from '../utils/config';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import Artwork from '../components/Artwork';
 import Logo from '../components/Logo';
@@ -80,8 +80,8 @@ function Pricing() {
           <span className="text-ink-soft">/ month</span>
         </div>
         <p className="mx-auto mt-5 max-w-xs text-sm leading-relaxed text-ink-soft">
-          No daily limit, and downloads that stay offline for {DOWNLOAD_EXPIRY_DAYS} days. Renews
-          monthly at ${PRICE.amount}; cancel anytime.
+          No daily limit — uninterrupted focus for as long as you work, with new tracks added
+          regularly. Renews monthly at ${PRICE.amount}; cancel anytime.
         </p>
         <Link to="/app?subscribe=1" className="btn-primary mt-8 w-full">
           Subscribe — {PRICE.label}

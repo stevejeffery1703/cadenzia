@@ -81,7 +81,7 @@ export default function AppPage({ subscription }) {
           <Library currentTrackId={audio.track?.id} onPlay={handlePlay} />
         </aside>
 
-        <Player audio={audio} isSubscriber={isSubscriber} onResume={handlePlay} />
+        <Player audio={audio} onResume={handlePlay} />
 
         {/* Session — right on desktop only. */}
         <aside className="hidden lg:block">

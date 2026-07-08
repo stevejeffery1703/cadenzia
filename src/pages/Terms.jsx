@@ -17,8 +17,8 @@ export default function Terms() {
 
       <Section title="The deal">
         Every track is free to stream. Each day gives you an hour of open listening; after that,
-        subscribe to keep going, or come back tomorrow. Subscribing removes the daily limit for good
-        and adds offline downloads.
+        subscribe to keep going, or come back tomorrow. Subscribing removes the daily limit for good,
+        and the library keeps growing.
       </Section>
 
       <Section title="Billing">
@@ -30,11 +30,6 @@ export default function Terms() {
         One email address, no password. Sign-in codes expire in 10 minutes. Delete your account
         anytime and everything on our side goes with it, immediately — see Privacy for the one
         exception (records our payment processor must keep by law).
-      </Section>
-
-      <Section title="Downloads">
-        A subscriber perk, trust-based rather than locked down. They're for your own offline
-        listening — not for resale or redistribution.
       </Section>
 
       <Section title="If something breaks">
@@ -57,8 +52,8 @@ export default function Terms() {
       </Section>
 
       <Section title="2. Accounts">
-        Signing in is optional for free listening but required to subscribe, download, or keep a
-        listening history. You're responsible for keeping access to your email address secure, since
+        Signing in is optional for free listening but required to subscribe, and it keeps you in sync
+        across your devices. You're responsible for keeping access to your email address secure, since
         that's how sign-in codes are delivered. Tell us if you think your account has been accessed
         without your permission.
       </Section>
@@ -79,9 +74,9 @@ export default function Terms() {
       </Section>
 
       <Section title="5. Content and ownership">
-        The music, artwork, and writing on {APP_NAME} belong to us (or our licensors). Subscribing or
-        downloading gives you a personal licence to listen — it doesn't transfer ownership or give you
-        the right to redistribute, sync, or sell anything you hear or see here.
+        The music, artwork, and writing on {APP_NAME} belong to us (or our licensors). Subscribing
+        gives you a personal licence to listen — it doesn't transfer ownership or give you the right
+        to redistribute, sync, or sell anything you hear or see here.
       </Section>
 
       <Section title="6. Sharing">

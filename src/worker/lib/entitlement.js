@@ -1,6 +1,6 @@
-// Entitlement logic, shared by the auth and download routes.
+// Entitlement logic, used by the auth route.
 //
-// A user is "premium" (ungated, downloads on) when EITHER Stripe reports an
+// A user is "premium" (ungated) when EITHER Stripe reports an
 // active subscription, OR they hold comp Premium — a premium_until in the future.
 // Comp Premium has no Stripe subscription behind it, so it lives in its own column
 // and is merged with subscription_status only here, at read time. Keeping them
