@@ -1,6 +1,6 @@
 // Minimal HS256 JWT sign/verify using the Web Crypto API (available in Workers).
-// Used for our own session tokens and signed share tokens. JWT_SECRET is a
-// Worker secret.
+// Used for session tokens plus the scoped stream-cookie and unsubscribe tokens.
+// JWT_SECRET is a Worker secret.
 
 function b64url(bytes) {
   let bin = '';

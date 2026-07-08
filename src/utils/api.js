@@ -33,8 +33,8 @@ export async function api(path, { method = 'GET', body, auth = false } = {}) {
   return data;
 }
 
-// A stable anonymous device id so free-tier limits and share tokens can be
-// tracked in KV without requiring an account. Stored locally only.
+// A stable anonymous device id, stored locally only. Currently just tags the
+// play-count ping; the free-tier daily limit lives in localStorage, not here.
 export function deviceId() {
   let id = localStorage.getItem('cad_device');
   if (!id) {

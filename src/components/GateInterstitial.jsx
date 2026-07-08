@@ -53,7 +53,7 @@ export default function GateInterstitial({
           <div className="panel flex flex-col p-6">
             <h3 className="font-display text-xl text-ink">Continue free today</h3>
             <p className="mt-2 flex-1 text-sm text-ink-soft">
-              Keep this session going — no charge, nothing to share. The limit simply resets tomorrow.
+              Keep this session going — no charge, no catch. The limit simply resets tomorrow.
             </p>
             <button type="button" onClick={onContinue} className="btn-ghost mt-5 w-full">
               Continue free
