@@ -45,6 +45,18 @@ export async function checkout(request, env) {
 
   const user = await selectOne(env, 'users', { id: claims.sub });
 
+  // Backstop against a double subscription. The UI hides "Subscribe" from active
+  // subscribers, but the /app?subscribe=1 deep link (and stale links) can still
+  // reach here — opening a second Checkout would bill them twice. Send an already-
+  // active customer to the billing portal to manage the one they have instead.
+  if (user?.subscription_status === 'active' && user?.stripe_customer_id) {
+    const existing = await stripe(env, 'billing_portal/sessions', {
+      customer: user.stripe_customer_id,
+      return_url: `${env.APP_URL}/account`,
+    });
+    return json({ url: existing.url }, { env });
+  }
+
   // Reuse or create the Stripe customer.
   let customerId = user?.stripe_customer_id;
   if (!customerId) {

@@ -41,6 +41,7 @@ const ROUTES = {
 
   'POST /api/email/subscribe': email.subscribe,
   'GET /api/email/unsubscribe': email.unsubscribe,
+  'POST /api/email/unsubscribe': email.unsubscribePost,
 };
 
 export default {

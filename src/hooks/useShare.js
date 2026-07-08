@@ -7,9 +7,9 @@ import { buildShareCard } from '../utils/shareCard';
 // as a quiet achievement ("3 hours of deep focus"), never as a toll at the gate.
 //
 // The share URL carries a referral tag: a signed-in listener's own referral code
-// when available (so a friend who follows it and signs up earns both of them a
-// free week — see the referral flow), otherwise an anonymous device tag that
-// still attributes the visit but grants no reward.
+// when available (so a friend who follows it and signs up gets a doubled free
+// first week — the sharer gets nothing dangled in return), otherwise an anonymous
+// device tag that still attributes the visit but unlocks no reward.
 
 function refUrl(refCode) {
   return `${APP_URL}?ref=${encodeURIComponent(refCode || deviceId())}`;

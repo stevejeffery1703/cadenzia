@@ -1,11 +1,12 @@
 -- Referral + comp Premium (2026-07).
 -- Applied via `wrangler d1 migrations apply cadenzia-db`.
 --
--- Two-sided referral: an invited friend and the person who invited them each get
--- a week of Premium. Premium earned this way is "comp" — there is no Stripe
--- subscription behind it — so it is tracked as an expiry on the user, kept
--- separate from subscription_status and merged with it only at read time
--- (see src/worker/lib/entitlement.js).
+-- NOTE: this migration originally shipped a two-sided referral (both parties got
+-- a week); the model was reworked shortly after so the referrer gets nothing and
+-- the invitee's free first week is simply doubled — the schema below still fits.
+-- Premium earned this way is "comp" — there is no Stripe subscription behind it —
+-- so it is tracked as an expiry on the user, kept separate from subscription_status
+-- and merged with it only at read time (see src/worker/lib/entitlement.js).
 
 ALTER TABLE users ADD COLUMN premium_until TEXT;   -- ISO8601 expiry of comp/referral Premium
 ALTER TABLE users ADD COLUMN referral_code TEXT;   -- opaque, per-user invite code
@@ -24,6 +25,6 @@ CREATE TABLE IF NOT EXISTS referrals (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
--- countReferrals() runs on every /me (for the invite UI) and on each signup (the
--- reward cap), both filtering by referrer_id — index it.
+-- countReferrals() runs on every /me (for the invite UI), filtering by
+-- referrer_id — index it.
 CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id);

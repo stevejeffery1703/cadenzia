@@ -11,7 +11,8 @@ export async function record(request, env) {
   if (!claims) return json({ ok: true }, { env }); // not signed in — nothing to record
 
   const { trackId, trackName, durationSeconds } = await request.json();
-  if (!trackId || !durationSeconds) {
+  const seconds = Number(durationSeconds);
+  if (!trackId || !Number.isFinite(seconds) || seconds <= 0) {
     return json({ error: 'trackId and durationSeconds required' }, { status: 400, env });
   }
 
@@ -19,7 +20,9 @@ export async function record(request, env) {
     user_id: claims.sub,
     track_id: trackId,
     track_name: trackName || null,
-    duration_seconds: Math.round(durationSeconds),
+    // Clamp to a sane ceiling — a single completion is at most tens of minutes,
+    // so this bounds any client attempt to inflate the private stats panel.
+    duration_seconds: Math.min(Math.round(seconds), 6 * 60 * 60),
   });
 
   return json({ ok: true }, { env });

@@ -7,6 +7,7 @@
 
 import { json } from '../middleware/cors.js';
 import { selectOne, insertRow, updateRows } from '../lib/db.js';
+import { sign, verify } from '../lib/jwt.js';
 
 export async function subscribe(request, env) {
   const { email, consent } = await request.json();
@@ -32,12 +33,21 @@ export async function subscribe(request, env) {
   return json({ ok: true }, { env });
 }
 
-export async function unsubscribe(request, env) {
-  const url = new URL(request.url);
-  const email = url.searchParams.get('email');
-  if (!email) return new Response('Missing email', { status: 400 });
+// One-click unsubscribe. The link carries a signed token, not a raw email, so
+// nobody can unsubscribe an address they don't control by guessing it. The same
+// handler serves the human GET (clicking the footer link) and the RFC 8058
+// one-click POST that Gmail/Yahoo fire from the List-Unsubscribe header.
+async function applyUnsubscribe(request, env) {
+  const token = new URL(request.url).searchParams.get('token');
+  const claims = token ? await verify(token, env.JWT_SECRET) : null;
+  if (!claims || claims.kind !== 'unsubscribe' || !claims.email) {
+    return new Response('This unsubscribe link is invalid or has expired.', {
+      status: 400,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+  }
 
-  await updateRows(env, 'email_subscribers', { email: email.toLowerCase() }, {
+  await updateRows(env, 'email_subscribers', { email: claims.email.toLowerCase() }, {
     unsubscribed: true,
   });
 
@@ -46,6 +56,9 @@ export async function unsubscribe(request, env) {
     { status: 200, headers: { 'Content-Type': 'text/plain' } }
   );
 }
+
+export const unsubscribe = applyUnsubscribe; // GET — footer link
+export const unsubscribePost = applyUnsubscribe; // POST — one-click (RFC 8058)
 
 // Shared helper used by auth + announcement sends. Only marketing sends (new-
 // music announcements) carry an unsubscribe footer — transactional mail (sign-in
@@ -62,9 +75,20 @@ export async function sendEmail(env, { to, subject, text, html, marketing = fals
   if (marketing && !env.MAILING_ADDRESS) {
     throw new Error('MAILING_ADDRESS must be set before sending marketing email (CAN-SPAM).');
   }
-  const unsubscribe = `${env.APP_URL}/api/email/unsubscribe?email=${encodeURIComponent(to)}`;
-  const footerText = `\n\n${env.MAILING_ADDRESS}\nUnsubscribe: ${unsubscribe}`;
-  const footerHtml = `<p style="margin-top:24px;color:#6B6358;font-size:12px;line-height:1.5">${env.MAILING_ADDRESS}<br><a href="${unsubscribe}" style="color:#6B6358">Unsubscribe</a></p>`;
+  // Only marketing mail carries an unsubscribe link, and it points at a signed
+  // token (see applyUnsubscribe) with a long life so an old newsletter's link
+  // still works. Transactional mail (sign-in codes) needs none of this.
+  let unsubscribe = null;
+  if (marketing) {
+    const token = await sign({ email: to, kind: 'unsubscribe' }, env.JWT_SECRET, {
+      expiresInSeconds: 60 * 60 * 24 * 365 * 5,
+    });
+    unsubscribe = `${env.APP_URL}/api/email/unsubscribe?token=${token}`;
+  }
+  const footerText = unsubscribe ? `\n\n${env.MAILING_ADDRESS}\nUnsubscribe: ${unsubscribe}` : '';
+  const footerHtml = unsubscribe
+    ? `<p style="margin-top:24px;color:#6B6358;font-size:12px;line-height:1.5">${env.MAILING_ADDRESS}<br><a href="${unsubscribe}" style="color:#6B6358">Unsubscribe</a></p>`
+    : '';
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -77,6 +101,17 @@ export async function sendEmail(env, { to, subject, text, html, marketing = fals
       subject,
       text: marketing && text ? `${text}${footerText}` : text,
       html: marketing && html ? `${html}${footerHtml}` : html,
+      // One-click unsubscribe (RFC 8058) for marketing mail — now effectively
+      // required by Gmail/Yahoo for bulk senders; the header URL is the same
+      // signed token, and the POST is handled by unsubscribePost.
+      ...(marketing && unsubscribe
+        ? {
+            headers: {
+              'List-Unsubscribe': `<${unsubscribe}>`,
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            },
+          }
+        : {}),
     }),
   });
   if (!res.ok) throw new Error(`Resend failed (${res.status})`);

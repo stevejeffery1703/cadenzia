@@ -14,8 +14,9 @@ export default function Privacy() {
       </p>
 
       <Section title="What we store">
-        Your email, if you sign in. Your subscription status. Your listening sessions — which track,
-        for how long. Nothing more.
+        Your email, if you sign in. Your subscription status (and a customer ID from our payment
+        processor, if you subscribe). Your listening sessions — which track, for how long. If someone
+        joins through your invite link, a record connecting the two accounts. That&rsquo;s all.
       </Section>
 
       <Section title="What we never do">
@@ -31,7 +32,9 @@ export default function Privacy() {
 
       <Section title="Deleting your data">
         Open your account and choose “Delete everything”. It removes your account, listening history,
-        and email record, and cancels any subscription — immediately.
+        and email record, and cancels any subscription — immediately. The one thing we can&rsquo;t erase
+        is the transaction record our payment processor (Stripe) is required by law to keep; everything
+        on our side is gone.
       </Section>
 
       <Section title="Email">

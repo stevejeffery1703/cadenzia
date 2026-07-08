@@ -17,8 +17,9 @@ export default function Terms() {
 
       <Section title="The deal">
         Every track is free to stream. Each day gives you an hour of open listening; after that,
-        subscribe to keep going, or come back tomorrow. Subscribing removes the limit entirely and
-        adds offline downloads.
+        subscribe to keep going, or come back tomorrow. New accounts get a free first week of
+        Premium — no daily limit — that simply ends on its own: no card, nothing to cancel.
+        Subscribing removes the limit for good and adds offline listening.
       </Section>
 
       <Section title="Billing">
@@ -28,7 +29,8 @@ export default function Terms() {
 
       <Section title="Your account">
         One email address, no password. Sign-in codes expire in 10 minutes. Delete your account
-        anytime and everything tied to it goes with it, immediately.
+        anytime and everything on our side goes with it, immediately — see Privacy for the one
+        exception (records our payment processor must keep by law).
       </Section>
 
       <Section title="Downloads">
@@ -64,10 +66,12 @@ export default function Terms() {
 
       <Section title="3. Subscriptions and billing">
         Subscriptions are ${PRICE.amount} a month and renew automatically until you cancel. Payment
-        is handled entirely by Stripe — we never see or store your card details. If we ever change the
-        price, we'll tell current subscribers in advance; the new price applies from your next billing
-        cycle. Cancelling stops future renewals but doesn't refund the current period, except where
-        we decide otherwise or the law requires it.
+        is handled entirely by Stripe — we never see or store your card details. A new account's free
+        first week of Premium takes no card and never turns into a charge on its own; it simply ends,
+        and you subscribe only if you choose to. If we ever change the price, we'll tell current
+        subscribers in advance; the new price applies from your next billing cycle. Cancelling stops
+        future renewals but doesn't refund the current period, except where we decide otherwise or the
+        law requires it.
       </Section>
 
       <Section title="4. Acceptable use">
@@ -83,9 +87,11 @@ export default function Terms() {
         the right to redistribute, sync, or sell anything you hear or see here.
       </Section>
 
-      <Section title="6. Sharing">
-        Unlocking a session by sharing works on trust — we don't verify the share actually posted. Please
-        don't abuse that; it's the same honesty we're extending to you.
+      <Section title="6. Referrals and sharing">
+        You can share your own listening milestones and invite friends with a personal link. A friend
+        who signs up through your link gets a longer free first week; nothing is asked of you in return,
+        and no reward is dangled for inviting. Please don't use invite links to farm free access — one
+        free first week per person is the spirit of it.
       </Section>
 
       <Section title="7. Changes and availability">
@@ -127,7 +133,7 @@ export default function Terms() {
         Questions about these terms — write to hello@cadenzia.app.
       </Section>
 
-      <p className="text-caption mt-12">Last updated 4 July 2026.</p>
+      <p className="text-caption mt-12">Last updated 8 July 2026.</p>
     </main>
   );
 }

@@ -71,11 +71,34 @@ export async function verify(request, env) {
   if (!email || !otp) return json({ error: 'Email and code required' }, { status: 400, env });
 
   const normalizedEmail = email.toLowerCase();
+
+  // Brute-forcing a 6-digit code is the real risk here, so verification is
+  // throttled two ways: a per-IP cap stops a distributed sweep across many
+  // emails, and a per-code attempt counter (below) burns the code after a few
+  // misses so a single 10-minute window can't be swept. Without this, a code
+  // that stays valid for 10 minutes is ~1e6 guesses with no ceiling.
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  if (await isRateLimited(env, `verify:ip:${ip}`, { limit: 20, windowSeconds: 900 })) {
+    return json({ error: 'Too many attempts. Try again in a few minutes.' }, { status: 429, env });
+  }
+
+  const attemptsKey = `otp:attempts:${normalizedEmail}`;
   const stored = await env.SESSIONS.get(`otp:${normalizedEmail}`);
   if (!stored || stored !== otp) {
+    // Count misses against the live code and burn it after 5, so the window
+    // can't be brute-forced. Re-requesting a fresh code is itself capped in
+    // magicLink (3 per email / 15 min), so the total guess budget stays tiny.
+    const attempts = Number((await env.SESSIONS.get(attemptsKey)) || '0') + 1;
+    if (stored && attempts >= 5) {
+      await env.SESSIONS.delete(`otp:${normalizedEmail}`);
+      await env.SESSIONS.delete(attemptsKey);
+    } else {
+      await env.SESSIONS.put(attemptsKey, String(attempts), { expirationTtl: 600 });
+    }
     return json({ error: 'Invalid or expired code' }, { status: 401, env });
   }
   await env.SESSIONS.delete(`otp:${normalizedEmail}`);
+  await env.SESSIONS.delete(attemptsKey);
 
   // Upsert the user. A brand-new account is what a referral rewards.
   let user = await selectOne(env, 'users', { email: normalizedEmail });
