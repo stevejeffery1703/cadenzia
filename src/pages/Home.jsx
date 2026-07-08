@@ -87,7 +87,7 @@ function Pricing() {
           Subscribe — {PRICE.label}
         </Link>
         <p className="text-caption mt-4">
-          Free to begin. An hour of open listening a day — then a gentle pause to carry on or come
+          Free to begin. An hour of open listening a day — then a brief pause to carry on or come
           back tomorrow, never a wall. Plays on with your screen off.
         </p>
       </div>

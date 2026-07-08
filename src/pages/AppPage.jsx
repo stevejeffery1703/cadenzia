@@ -127,9 +127,11 @@ export default function AppPage({ subscription }) {
         track={audio.track}
         onClose={() => setShowGate(false)}
         onContinue={() => {
+          // Unlock the rest of today and resume the music underneath; the gate
+          // stays open and transitions to the word-of-mouth invitation, then
+          // closes on "Back to listening" (see GateInterstitial).
           session.unlockSession();
-          setShowGate(false);
-          audio.play(); // resume the piece the gate faded down
+          audio.play();
         }}
         onSubscribe={() => {
           setShowGate(false);
@@ -150,7 +152,7 @@ function freeStatusText(session) {
   if (session.unlocked) return 'Listening free for the rest of today';
   const left = session.minutesRemaining;
   if (left <= 0) return 'Free hour used for today';
-  if (left <= 10) return `${left} min free left — then a gentle pause, not a wall`;
+  if (left <= 10) return `${left} min free left — then a brief pause, not a wall`;
   return `${left} min of free listening left today`;
 }
 
