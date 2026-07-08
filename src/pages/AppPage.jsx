@@ -81,7 +81,11 @@ export default function AppPage({ subscription }) {
           <Library currentTrackId={audio.track?.id} onPlay={handlePlay} />
         </aside>
 
-        <Player audio={audio} onResume={handlePlay} />
+        <Player
+          audio={audio}
+          onResume={handlePlay}
+          freeNote={!isSubscriber ? freeStatusText(session) : null}
+        />
 
         {/* Session — right on desktop only. */}
         <aside className="hidden lg:block">
@@ -138,6 +142,18 @@ export default function AppPage({ subscription }) {
   );
 }
 
+// The free-tier status line, shared by the desktop session rail and the mobile
+// player readout so they never drift. As the hour runs low it also reassures
+// that the limit is a soft pause, not a wall — so a first-time listener isn't
+// deterred, and discovers they can simply carry on.
+function freeStatusText(session) {
+  if (session.unlocked) return 'Listening free for the rest of today';
+  const left = session.minutesRemaining;
+  if (left <= 0) return 'Free hour used for today';
+  if (left <= 10) return `${left} min free left — then a gentle pause, not a wall`;
+  return `${left} min of free listening left today`;
+}
+
 // Quiet session readout. Current piece, time in session, and an optional notes
 // field — no gamification, no streaks.
 function SessionPanel({ audio, session, focus, category, isSubscriber }) {
@@ -158,15 +174,7 @@ function SessionPanel({ audio, session, focus, category, isSubscriber }) {
       <div>
         <p className="text-label text-ink-soft">In session</p>
         <p className="mt-2 font-display text-2xl tabular-nums text-ink">{formatTime(audio.elapsed)}</p>
-        {!isSubscriber && (
-          <p className="text-caption mt-1">
-            {session.minutesRemaining > 0
-              ? `${session.minutesRemaining} min of free listening left today`
-              : session.unlocked
-                ? 'Listening free for the rest of today'
-                : 'Free hour used for today'}
-          </p>
-        )}
+        {!isSubscriber && <p className="text-caption mt-1">{freeStatusText(session)}</p>}
       </div>
 
       {focus.headline && <FocusShare headline={focus.headline} />}

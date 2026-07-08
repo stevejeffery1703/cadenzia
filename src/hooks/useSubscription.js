@@ -3,10 +3,10 @@ import { getMe } from '../utils/auth';
 import { getToken, setToken } from '../utils/api';
 
 // Resolves the current user's Premium status from the Worker, which checks D1
-// (kept in sync by the Stripe webhook, plus any comp/referral grant). "Premium"
-// means paid OR comped; the raw Stripe status is kept separately so the account
-// page can tell a billing subscriber apart from a referral-comped one. Anonymous
-// users are simply "free". Cached in memory; refreshed on mount and on demand.
+// (kept in sync by the Stripe webhook, plus any comp grant). "Premium" means
+// paid OR comped; the raw Stripe status is kept separately so the account page
+// can tell a billing subscriber apart from a comped one. Anonymous users are
+// simply "free". Cached in memory; refreshed on mount and on demand.
 export function useSubscription() {
   const [user, setUser] = useState(null);
   const [status, setStatus] = useState('free'); // 'free' | 'active' | 'loading'

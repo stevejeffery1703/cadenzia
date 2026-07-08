@@ -5,7 +5,7 @@ import Waveform from './Waveform';
 
 // The now-playing surface — large artwork, title, waveform, and the only
 // controls that matter. This is the product; nothing else competes with it.
-export default function Player({ audio, onResume }) {
+export default function Player({ audio, onResume, freeNote }) {
   const { track } = audio;
 
   if (!track) {
@@ -100,6 +100,11 @@ export default function Player({ audio, onResume }) {
       </div>
 
       <p className="text-caption mt-6 tabular-nums">In session · {formatTime(audio.elapsed)}</p>
+
+      {/* Free-time readout for mobile, where the desktop session rail is hidden —
+          so a phone listener sees the hour (and that it's soft) rather than
+          meeting the gate with no warning. */}
+      {freeNote && <p className="text-caption mt-1 lg:hidden">{freeNote}</p>}
     </section>
   );
 }
