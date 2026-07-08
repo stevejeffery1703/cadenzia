@@ -11,7 +11,6 @@ import * as subscription from './routes/subscription.js';
 import * as download from './routes/download.js';
 import * as email from './routes/email.js';
 import * as plays from './routes/plays.js';
-import * as sessions from './routes/sessions.js';
 import { PAGE_META } from '../utils/pageMeta.js';
 
 // The app's real client-side routes — used to tell a genuine soft-404 apart
@@ -34,8 +33,6 @@ const ROUTES = {
 
   'POST /api/plays/increment': plays.increment,
   'GET /api/plays/count': plays.count,
-
-  'POST /api/sessions/record': sessions.record,
 
   'POST /api/download/link': download.link,
 

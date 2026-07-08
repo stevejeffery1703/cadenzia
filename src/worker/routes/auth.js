@@ -9,13 +9,8 @@
 
 import { json } from '../middleware/cors.js';
 import { sign, authedUser } from '../lib/jwt.js';
-import { selectOne, insertRow, deleteRows, getListeningStats } from '../lib/db.js';
-import {
-  isPremium,
-  ensureReferralCode,
-  grantWelcomePremium,
-  countReferrals,
-} from '../lib/entitlement.js';
+import { selectOne, insertRow, deleteRows } from '../lib/db.js';
+import { isPremium } from '../lib/entitlement.js';
 import { isRateLimited } from '../lib/rateLimit.js';
 import { sendEmail, emailShell } from './email.js';
 
@@ -67,7 +62,7 @@ export async function magicLink(request, env) {
 }
 
 export async function verify(request, env) {
-  const { email, otp, ref } = await request.json();
+  const { email, otp } = await request.json();
   if (!email || !otp) return json({ error: 'Email and code required' }, { status: 400, env });
 
   const normalizedEmail = email.toLowerCase();
@@ -100,9 +95,10 @@ export async function verify(request, env) {
   await env.SESSIONS.delete(`otp:${normalizedEmail}`);
   await env.SESSIONS.delete(attemptsKey);
 
-  // Upsert the user. A brand-new account is what a referral rewards.
+  // Upsert the user. Signing in creates the account if it's their first time —
+  // the same account they'll subscribe on, and what carries their status across
+  // devices.
   let user = await selectOne(env, 'users', { email: normalizedEmail });
-  const isNewUser = !user;
   if (!user) {
     user = await insertRow(env, 'users', {
       email: normalizedEmail,
@@ -110,26 +106,11 @@ export async function verify(request, env) {
     });
   }
 
-  await ensureReferralCode(env, user);
-  let welcome = null;
-  if (isNewUser) {
-    // Grant the free first week (doubled for a referred signup). Best-effort — a
-    // hiccup here must never block a valid sign-in.
-    try {
-      welcome = await grantWelcomePremium(env, ref, user);
-    } catch (err) {
-      console.error(`[auth.verify] Welcome grant failed for ${user.id}: ${err.stack || err}`);
-    }
-  }
-
   const token = await sign({ sub: user.id, email: user.email }, env.JWT_SECRET, {
     expiresInSeconds: 60 * 60 * 24 * 30, // 30 days
   });
 
-  // Re-read so the response reflects the Premium just granted. `welcome` tells the
-  // client which greeting to show — a free first week, or a friend's two.
-  const fresh = (await selectOne(env, 'users', { id: user.id })) || user;
-  return json({ token, user: publicUser(fresh), welcome }, { env });
+  return json({ token, user: publicUser(user) }, { env });
 }
 
 export async function me(request, env) {
@@ -139,12 +120,7 @@ export async function me(request, env) {
   const user = await selectOne(env, 'users', { id: claims.sub });
   if (!user) return json({ error: 'Not found' }, { status: 404, env });
 
-  await ensureReferralCode(env, user); // backfill codes for pre-referral accounts
-
-  // Premium (paid or comp) sees the stats panel; skip the query otherwise.
-  const stats = isPremium(user) ? await getListeningStats(env, user.id) : null;
-  const referralCount = await countReferrals(env, user.id);
-  return json(publicUser(user, { stats, referralCount }), { env });
+  return json(publicUser(user), { env });
 }
 
 export async function deleteAccount(request, env) {
@@ -180,16 +156,13 @@ export async function deleteAccount(request, env) {
   return json({ ok: true }, { env });
 }
 
-function publicUser(user, { stats = null, referralCount = 0 } = {}) {
+function publicUser(user) {
   return {
     id: user.id,
     email: user.email,
     subscription_status: user.subscription_status || 'free', // raw Stripe status
     premium_until: user.premium_until || null,
     is_premium: isPremium(user),
-    referral_code: user.referral_code || null,
-    referral_count: referralCount,
-    stats,
   };
 }
 

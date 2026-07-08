@@ -51,11 +51,8 @@ export function useSubscription() {
     isSubscriber: status === 'active',
     status,
     // True only for a paying Stripe subscriber (has a billing portal); a comped
-    // referral user is a subscriber for access, but not this.
+    // user has access but no portal.
     stripeActive: user?.subscription_status === 'active',
-    premiumUntil: user?.premium_until || null,
-    referralCode: user?.referral_code || null,
-    referralCount: user?.referral_count || 0,
     loading,
     sessionExpired,
     refresh,

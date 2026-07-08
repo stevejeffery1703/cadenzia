@@ -5,26 +5,13 @@ import { openBillingPortal } from '../utils/stripe';
 import { api } from '../utils/api';
 import { useEmailSignIn } from '../hooks/useEmailSignIn';
 import { useDocumentHead } from '../hooks/useDocumentHead';
-import StatsPanel from '../components/StatsPanel';
-import InviteFriend from '../components/InviteFriend';
 import { PRICE } from '../utils/config';
 
-// A comp-Premium expiry, shown plainly ("July 13").
-function formatDate(iso) {
-  if (!iso) return '';
-  try {
-    return new Date(iso).toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
-  } catch {
-    return '';
-  }
-}
-
-// Account. Minimal by design — sign in, subscription, history for subscribers,
-// and a plainly available way to delete everything.
+// Account. Minimal by design — sign in (which also syncs across devices),
+// subscription, and a plainly available way to delete everything.
 export default function Account({ subscription }) {
   useDocumentHead('/account');
-  const { user, isSubscriber, stripeActive, premiumUntil, referralCode, referralCount, refresh, sessionExpired } =
-    subscription;
+  const { user, stripeActive, refresh, sessionExpired } = subscription;
   const signIn = useEmailSignIn({ onVerified: refresh });
   const [params, setParams] = useSearchParams();
   const [justSubscribed, setJustSubscribed] = useState(false);
@@ -50,7 +37,7 @@ export default function Account({ subscription }) {
         <p className="mt-3 text-sm text-ink-soft">
           {sessionExpired
             ? "Your session expired. Sign in again to continue — there's no password to remember."
-            : "Enter your email address, and we'll send a one-time code. There is no password to remember."}
+            : "Enter your email and we'll send a one-time code — no password to remember. It's the same account you subscribe on, and it keeps you in sync across your devices."}
         </p>
 
         {signIn.step === 'email' ? (
@@ -126,16 +113,6 @@ export default function Account({ subscription }) {
         </button>
       </div>
 
-      {isSubscriber && (
-        <section className="mt-12">
-          <h2 className="text-label text-ink-soft">Session history</h2>
-          <p className="mt-1 text-sm text-ink-faint">For your eyes only. Never sold, never shared.</p>
-          <div className="mt-5">
-            <StatsPanel stats={user.stats} />
-          </div>
-        </section>
-      )}
-
       <section className="panel mt-12 p-7">
         <h2 className="font-display text-2xl text-ink">Subscription</h2>
         {stripeActive ? (
@@ -145,19 +122,11 @@ export default function Account({ subscription }) {
               Manage billing
             </button>
           </>
-        ) : isSubscriber ? (
-          <>
-            <p className="mt-2 text-sm text-ink-soft">
-              You’re on your free Premium trial — active until {formatDate(premiumUntil)}. Subscribe
-              to keep it going without a gap.
-            </p>
-            <a href="/app?subscribe=1" className="btn-primary mt-5 inline-flex">
-              Subscribe — {PRICE.label}
-            </a>
-          </>
         ) : (
           <>
-            <p className="mt-2 text-sm text-ink-soft">You are on the free tier.</p>
+            <p className="mt-2 text-sm text-ink-soft">
+              You&rsquo;re on the free tier — an hour of listening a day.
+            </p>
             <a href="/app?subscribe=1" className="btn-primary mt-5 inline-flex">
               Listen without limits — {PRICE.label}
             </a>
@@ -165,13 +134,11 @@ export default function Account({ subscription }) {
         )}
       </section>
 
-      <InviteFriend referralCode={referralCode} referralCount={referralCount} />
-
       <section className="mt-12">
         <h2 className="text-label text-ink-soft">Delete account</h2>
         <p className="mt-2 text-sm text-ink-soft">
-          Removes your account, listening history, and email record, and cancels any subscription.
-          Immediate, with no deactivation delay.
+          Removes your account and email record, and cancels any subscription. Immediate, with no
+          deactivation delay.
         </p>
         <button
           onClick={async () => {

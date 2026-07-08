@@ -6,8 +6,8 @@ import { useShare } from '../hooks/useShare';
 // what the listener has actually done today ("3 hours of deep focus") and lets
 // them share it as understated art. It appears only once the focus is worth
 // celebrating, and asks nothing in return.
-export default function FocusShare({ headline, refCode }) {
-  const { share, shareTo, canNativeShare, busy, error } = useShare({ refCode });
+export default function FocusShare({ headline }) {
+  const { share, shareTo, canNativeShare, busy, error } = useShare();
   const [showLinks, setShowLinks] = useState(false);
   if (!headline) return null;
 

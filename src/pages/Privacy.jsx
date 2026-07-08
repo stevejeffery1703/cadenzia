@@ -14,14 +14,13 @@ export default function Privacy() {
       </p>
 
       <Section title="What we store">
-        Your email, if you sign in. Your subscription status (and a customer ID from our payment
-        processor, if you subscribe). Your listening sessions — which track, for how long. If someone
-        joins through your invite link, a record connecting the two accounts. That&rsquo;s all.
+        Your email, if you sign in, and your subscription status — plus a customer ID from our payment
+        processor if you subscribe. That&rsquo;s all. We don&rsquo;t keep a history of what you played.
       </Section>
 
       <Section title="What we never do">
         No ads. No third-party analytics. No fingerprinting. We do not sell or share your data, ever.
-        Your listening history is for you.
+        We don&rsquo;t track or profile what you listen to.
       </Section>
 
       <Section title="Cookies and storage">
@@ -31,10 +30,9 @@ export default function Privacy() {
       </Section>
 
       <Section title="Deleting your data">
-        Open your account and choose “Delete everything”. It removes your account, listening history,
-        and email record, and cancels any subscription — immediately. The one thing we can&rsquo;t erase
-        is the transaction record our payment processor (Stripe) is required by law to keep; everything
-        on our side is gone.
+        Open your account and choose “Delete everything”. It removes your account and email record, and
+        cancels any subscription — immediately. The one thing we can&rsquo;t erase is the transaction
+        record our payment processor (Stripe) is required by law to keep; everything on our side is gone.
       </Section>
 
       <Section title="Email">
