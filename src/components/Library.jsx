@@ -1,4 +1,4 @@
-import { CATEGORIES, tracksByCategory, formatDuration } from '../utils/tracks';
+import { CATEGORIES, tracksByCategory } from '../utils/tracks';
 import Artwork from './Artwork';
 
 // The library — every track, organised by category. Doubles as track detail:
@@ -44,8 +44,8 @@ export default function Library({ currentTrackId, onPlay }) {
                       >
                         {track.name}
                       </span>
-                      <span className="text-caption">
-                        {track.loop ? 'Loops seamlessly' : formatDuration(track.durationSeconds)}
+                      <span className="block truncate text-caption">
+                        {track.description}
                       </span>
                     </span>
                     {active && <PlayingDot />}
