@@ -14,65 +14,77 @@ Source of truth for the categories and track list is
 
 | | Deep Focus | Energy | Creativity | Calm |
 |---|---|---|---|---|
-| **Arousal** | Low but dense/immersive | High but controlled | Medium, open | Lowest, enveloping |
-| **Tempo** | Pulseless | Steady legato pulse 100–110, no build | Loose, implied 88–96 | Pulseless |
+| **Arousal** | Low but dense/immersive | High, gently driven | Medium, open | Lowest, enveloping |
+| **Tempo & rhythm** | Pulseless, beatless | Gentle steady beat, 100–112 | Light beat, 88–96 | Pulseless, beatless |
 | **Tonality** | Dark, modal, single drone | Bright, one fixed key | Bright, colourful, one fixed key | Warm, consonant, resolved |
+| **Melody** | None — buried drones | Subtle repeating motif | Subtle evolving motif | None — soft washes |
+| **Stereo** | Subtle width | Wide + slow auto-pan | Wide + slow auto-pan | Subtle width |
 | **Artwork** | `depth` — deep-water contours | `score` — abstracted staff | `constellation` — scattered notes | `candlelight` — warm washes |
 | **Visual density** | Highest | Structured / geometric | Sparse, airy | Near-empty, blurred |
 | **Warmth (clay↔pine)** | Coolest (deep glow only) | Warm gold accent | Cool-bright | Warmest, clay-dominant |
 | **Length** | ~15 min seamless loop | ~15 min seamless loop | ~15 min seamless loop | ~15 min seamless loop |
 | **Loops seamlessly** | **Yes** (`loop:true`) | **Yes** (`loop:true`) | **Yes** (`loop:true`) | **Yes** (`loop:true`) |
 
+The library now splits into two production families: **beatless washes** (Deep Focus,
+Calm) and **rhythmic beds** (Energy, Creativity, in the Brain.fm mould — a gentle steady
+beat, a warm bass pulse, a subtle recurring melody, and moving stereo). They share the
+brand rules below but are *generated and assembled differently* — see "Two assembly paths".
+
 ---
 
 ## Audio production briefs
 
-**Shared rules (all four):** instrumental only, no vocals or spoken word, no recognisable
-melodic hook that grabs the ear. **No percussion and no sharp transients anywhere** — not
-even in Energy (see the stitch rules below); momentum comes from a legato pulse, never
-beats. Nothing sudden — no drops, risers, impacts, builds, or silence gaps; evolution is
-gradual only. Maintain a steady spectral floor so the track masks room noise. Mono-compatible
-mix, gentle high-shelf roll-off to prevent fatigue over long sessions, controlled low end.
-Master every track to the **same loudness** (target ~-17 LUFS integrated, tight true-peak
-ceiling) so switching between them never jars.
+**Shared rules (all four):** instrumental only, no vocals or spoken word, no melodic hook
+so catchy it pulls the ear off the work. **No arc, ever** — no drops, risers, impacts,
+builds, or drum fills; the energy sits at one even plateau the whole way (a build or a fill
+can't loop). Maintain a steady spectral floor so the track masks room noise. Keep the mix
+**mono-compatible** (the stereo widening must not collapse oddly on a phone speaker), with a
+gentle high-shelf roll-off against fatigue over long sessions, and controlled low end.
+Master every track to the **same loudness** (~-17 LUFS integrated, tight true-peak ceiling)
+so switching between them never jars.
+
+Where the two families differ: the **beatless** categories stay free of percussion and
+sharp transients (their masters are crossfade-stitched, and transients would flam at the
+joins); the **rhythmic** categories now carry a soft, steady beat and subtle melody — fine,
+because they're looped/extended as one continuous take, never crossfaded from separate ones.
 
 ### Everything loops — uniform ~15-minute seamless loops
 
-**As of 2026-07-13 all four categories loop** (`loop:true` in `tracks.js`); each master is a
-uniform **~15-minute (900s) seamless loop**. This supersedes the earlier split (short loops
-for Deep Focus/Calm, long through-composed pieces for Energy/Creativity).
+**All four categories loop** (`loop:true` in `tracks.js`); each master is a uniform
+**~15-minute (900s) seamless loop**. Beatless tracks loop on a seamless equal-energy splice;
+rhythmic tracks loop on a **downbeat** (a whole number of bars) so the groove never stumbles
+at the wrap.
 
 Why this model:
 - **A seamless loop is the most flexible primitive.** It can hold one texture indefinitely
-  *or* the player can auto-advance to the next track — a through-composed piece can only
-  advance. For focus audio, holding a texture with no mid-work change is the whole point.
-- **Why 15 minutes.** A 2–3 min loop gets *recognised* inside a normal work block — you start
-  anticipating the return, which breaks focus. Recognition collapses past ~10–12 min. 30 min
-  buys little more for roughly double the production and QA effort. 15 min is the sweet spot.
+  *or* the player can auto-advance — a through-composed piece can only advance.
+- **Why 15 minutes.** A 2–3 min loop gets *recognised* inside a work block; recognition
+  collapses past ~10–12 min; 30 min buys little more for double the effort. 15 min is the
+  sweet spot. (For rhythmic tracks a shorter bar-locked loop is acceptable too — a steady
+  groove is repetitive by design — but aim for 15 via *extend* where you can.)
 
-What that demands of the master (it follows from the player being a single bare `<audio>`
-element that native-loops with **no crossfade** at the loop point):
-- The loop join must be a **seamless, equal-energy splice** — the end flows into the start at
-  the same level and density, no transient, no gap.
-- **Bake no fades into the master.** A baked fade-in or fade-out replays at the loop point and
-  dips on every pass. (The assembly step below closes the loop with a wrap-around crossfade
-  instead of a baked fade.)
+What that demands of the master (the player is a single bare `<audio>` element that
+native-loops with **no crossfade** at the loop point):
+- The loop join must be **seamless** — equal-energy for washes, on a downbeat for grooves.
+- **Bake no fades into the master.** A baked fade replays at the loop point and dips every
+  pass. The assembly step closes the loop instead.
 
-Playback-boundary fades (first play, the daily gate, a manual stop) are the player's job where
-it can, the material's where it can't:
+Playback-boundary fades (first play, the daily gate, a manual stop) are the player's job
+where it can, the material's where it can't:
 - On desktop/Android the player ramps element volume — real fades.
-- On **iOS the OS pins element volume**, so the player detects that and **stops cleanly**
-  rather than pretend-fading. Harmless here — every category is transient-free, so a wash
-  simply ceases. If on-device testing shows the cut is too abrupt, give each track a short
-  **outro file** (5–8s, from loop level, baked fade to silence) the player swaps to at the
-  gate. Kept in reserve — don't build it unless testing calls for it.
+- On **iOS the OS pins element volume**, so the player detects that and **stops cleanly**.
+  Harmless for the washes; for the rhythmic tracks the stop lands on whatever beat is
+  playing, which is fine at the gate. If on-device testing shows it's abrupt, add a short
+  **outro file** (5–8s, baked fade) the player swaps to. Kept in reserve.
 
 ### The four categories
 
-Reference feels are named for *your ear*, not the tag box — ACE-Step doesn't do "in the style
-of <artist>", so the tag strings translate these into describable timbres and moods.
+Reference feels are named for *your ear*, not the tag box — ACE-Step doesn't do "in the
+style of <artist>". The rhythmic two lean on **Brain.fm** as the touchstone: unobtrusive
+electronic focus music, a soft steady beat, warm bass, a subtle repeating motif, rich moving
+stereo — energising without ever demanding attention or building to a peak.
 
-#### Deep Focus — "for the work that needs all of you"
+#### Deep Focus — "for the work that needs all of you"  ·  *beatless*
 - **Energy:** low-arousal but *dense and immersive* — calm surface, deep pull. Sustained, never sleepy.
 - **Tempo/pulse:** effectively pulseless; no drums. Any motion is tidal — 20–40s swell cycles, not a beat you could tap.
 - **Harmony:** one tonal centre held for the whole track. Dark and modal (Aeolian/Dorian) or open fifths. Minimal harmonic movement is the point — movement is distraction.
@@ -81,25 +93,25 @@ of <artist>", so the tag strings translate these into describable timbres and mo
 - **The five (water/depth theme):** Fathom (clearest, most "water") · Undertow (more low-end pressure) · Throughline (one faintly sustained line the whole way) · Current (slightly more motion) · The Deep (darkest, lowest, longest).
 - **Reference feel:** Stars of the Lid, Eno *Thursday Afternoon*, Biosphere *Substrata*, the stillest parts of Max Richter *Sleep*.
 
-#### Energy — "the moment before beginning"
-- **Energy:** high-arousal but *clean and controlled* — "energy you can think through," not workout music. Alert, upright, forward.
-- **Tempo/pulse:** clear but restrained, **100–110 BPM**, carried by a **flowing legato ostinato** — a steady pulse held the whole way. **Set the tempo and hold it: sustained, even, no builds, no crescendo, no drop.** (This is the "sustained, not building" reshape — a crescendo can't loop.)
-- **Harmony:** bright — major or Lydian/Mixolydian, optimistic without being saccharine. A gentle 2–4 chord cycle over one fixed centre.
-- **Timbre:** soft-edged synth arpeggios and legato ostinato, warm sustained strings, soft-attack piano, pads that "breathe" with the pulse. Crisp but never piercing — **no percussion, no staccato, no sharp attacks** (they flam across a crossfade).
-- **Avoid:** drums of any kind, EDM builds/drops, brass stabs, anything with a hard attack or that makes you want to dance instead of start.
-- **The five:** Overture (anticipatory, opening) · First Light (warm, dawn) · Ascent (steady *elevated* plateau, not a climb) · Ignition (tightest, most focused drive) · Prelude (poised, restrained).
-- **Reference feel:** Tycho, Bonobo (instrumental), Kiasmos (softer), Nils Frahm rhythmic pieces (*Says*, *Sunson*) — but with their beats stripped to a legato pulse.
+#### Energy — "the moment before beginning"  ·  *rhythmic*
+- **Energy:** high-arousal but *clean and controlled* — "energy you can think through," not workout music. Alert, upright, forward, but even the whole way.
+- **Tempo/rhythm:** a **gentle, steady electronic beat, 100–112 BPM** — soft kick, light hi-hats, maybe a shaker; think Brain.fm's "focus," not a club. A **warm sub-bass pulse** under it. **Set the groove and hold it — no builds, no drops, no fills, no crescendo.**
+- **Melody/harmony:** bright — major or Lydian/Mixolydian. A **subtle, repeating melodic motif** (bright synth or soft piano/pluck) over a gentle 2–4 chord cycle on one fixed centre. Keep the motif understated and looping — present, not a hook.
+- **Timbre:** warm analog synths, soft-edged plucks and arpeggios, breathing pads, a rounded bassline. Crisp but never piercing; a **wide, moving stereo field** (the auto-pan goes on in post).
+- **Avoid:** big/EDM drums, four-on-the-floor that begs you to dance, builds/drops, brass stabs, anything with a hard peak.
+- **The five:** Overture (anticipatory, opening) · First Light (warm, dawn) · Ascent (steady *elevated* plateau, not a climb) · Ignition (tightest, most driving) · Prelude (poised, restrained).
+- **Reference feel:** Brain.fm focus/energy, Tycho, Bonobo (instrumental), Kiasmos (softer), Lane 8 (calmer) — steady grooves that stay level.
 
-#### Creativity — "something is being made"
+#### Creativity — "something is being made"  ·  *rhythmic (lighter)*
 - **Energy:** medium-arousal, open, exploratory. Bright but unhurried — leaves mental space rather than filling it.
-- **Tempo/pulse:** loose, implied **88–96 BPM**, rhythm from gentle arpeggiation not drums. Spacious, lots of air between events (the "scattered notes").
-- **Harmony:** the most harmonically colourful of the four — added-9ths, gentle suspensions, question-and-answer phrasing that resolves softly and stays open, never conclusive. One fixed key/centre.
-- **Timbre:** soft bells and mallet tones **with long decay and reverb tails** (so nothing has a sharp attack), sparse Rhodes/pads, plucked textures softened by delay so single notes bloom and "connect" (the arcs in the artwork). Wide but soft stereo field.
-- **Avoid:** dense arrangements, insistent rhythm, dark/heavy tones, hard mallet attacks, anything that sounds finished.
+- **Tempo/rhythm:** a **light, gentle beat, 88–96 BPM** — soft kick, brushed/soft percussion, spacious, lots of air between events (the "scattered notes"). Warmer and looser than Energy.
+- **Melody/harmony:** the most harmonically colourful of the four — added-9ths, gentle suspensions, question-and-answer phrasing that resolves softly and stays open. A **subtle, evolving motif** on bells, mallets or plucks with long decay, so notes bloom and "connect" (the arcs in the artwork). One fixed key/centre.
+- **Timbre:** soft bells and mallet tones with long reverb tails, sparse Rhodes/pads, plucked textures softened by delay; a **wide, moving stereo field**.
+- **Avoid:** dense arrangements, insistent or heavy rhythm, dark/heavy tones, hard mallet attacks, anything that sounds finished.
 - **The five:** Constellation (most scattered) · Ideation (loose, bright) · Synthesis (threads converging) · Lattice (a gentle emerging pattern) · Aperture (widest, most reverberant).
-- **Reference feel:** Ólafur Arnalds, Hania Rani, Nils Frahm *Ambre*, Bibio, brighter Eno (*Music for Airports*).
+- **Reference feel:** Brain.fm creativity/flow, Bibio, Bonobo, Ólafur Arnalds' brighter pieces, Nils Frahm *Ambre*.
 
-#### Calm — "set the work down"
+#### Calm — "set the work down"  ·  *beatless*
 - **Energy:** the lowest — warm, enveloping, restorative. For breaks and wind-down between sessions (adjacent to, but not, sleep).
 - **Tempo/pulse:** none. Pure ambient wash; any motion is glacial (30–50s blooms).
 - **Harmony:** warm and fully resolved — a single shimmering major/Lydian chord or the slowest possible drift. Nothing unresolved or tense.
@@ -112,80 +124,97 @@ of <artist>", so the tag strings translate these into describable timbres and mo
 
 ## Generating the masters — ComfyUI + ACE-Step
 
-The masters are generated on a rented GPU in **ComfyUI** with **ACE-Step**. Because ACE-Step
-stays coherent only up to ~4 minutes, each 15-minute master is built from **four ~4-minute
-segments** of the same track, crossfaded together into one piece, and looped.
+Generated on a rented GPU in **ComfyUI** with **ACE-Step**. ACE-Step stays coherent only up
+to ~4 min, so a 15-min master is never a single render.
 
-### Why the four segments stitch cleanly — the tag rules
+### Two assembly paths
 
-The finished track is four ~4-min renders crossfaded into one ~15-min piece, with the piece's
-end crossfaded back into its start to close the loop. For those joins to be inaudible, any
-segment of a track must be interchangeable with any other. Four rules make that true — all are
-baked into the tag strings below:
+**Beatless — Deep Focus & Calm.** Generate **four ~4-min segments** (same tags, seed +1 each),
+crossfade them into one ~15-min piece, then crossfade the tail back into the head to close
+the loop. The crossfades are invisible because there are no transients to misalign.
 
-1. **One prompt, four seeds — never four different prompts.** All four segments of a track use
-   the *identical* tag string; only the **seed** changes. Same tags → same key, tempo,
-   instrument palette, and density, so any segment crossfades into any other. Four different
-   seeds still give four genuinely different ~4-min textures, so the 15 min *evolves* instead
-   of repeating — but they never clash. (Writing a different prompt per part is the number-one
-   way to get a lurch at a join.)
-2. **No percussion, no sharp transients — every category, Energy included.** A crossfade
-   overlaps two segments for several seconds; if either has drum hits or plucked/staccato
-   attacks, you hear the two offset against each other (a flam). Sustained/legato material has
-   nothing to misalign, so it crossfades invisibly. Energy's momentum comes from a *flowing
-   legato ostinato and a steady harmonic pulse*, not beats.
-3. **Fixed key + fixed tempo per track.** The key is pinned in every prompt so segments don't
-   modulate against each other at a join. Where there's a pulse (Energy, Creativity) the BPM is
-   pinned too. Beatless categories (Deep Focus, Calm) need no tempo at all — which is exactly
-   why they're the most forgiving to stitch.
-4. **Steady state, no arc.** No intro, outro, build, crescendo, drop, or ending — every segment
-   sits at one even plateau. This matters twice: level-matched segments crossfade without a dip,
-   and a flat plateau is what lets the loop close on itself.
+**Rhythmic — Energy & Creativity.** A beat *cannot* be crossfaded from four independent takes
+— their downbeats won't line up and you'll hear a flam. So make these as **one continuous
+groove**, two ways (best first):
+1. **Extend (preferred).** Generate one ~4-min seed, then use ComfyUI's ACE-Step
+   **extend/continue** to grow the *same* take to ~15 min. The beat and key stay continuous —
+   no joins at all — then close the loop on a downbeat.
+2. **Short bar-locked loop (fallback).** If extend is fiddly, make one clean ~3–4 min take and
+   loop *that* natively, cut exactly on a bar line. Groove-based focus music tolerates a short
+   loop well — a steady beat is repetitive by design — as long as the melody stays subtle so
+   nothing hooky recurs.
 
-The assembly step also loudness-normalises each segment and trims ACE-Step's soft intro/outro
-ramp before crossfading, so residual differences are cleaned up in post — but the tags do most
-of the work.
+### The tag rules (both paths)
 
-### ComfyUI settings (per segment)
+1. **Fixed key + fixed tempo per track**, pinned in every prompt. For the rhythmic tracks the
+   BPM is load-bearing — it's what lets the loop close cleanly on a bar.
+2. **No arc.** No intro, build, crescendo, drop, fill, or ending — one even plateau the whole
+   way. (Brain.fm-style: energising by texture and groove, never by climbing.)
+3. **Beatless path only:** no percussion / no sharp transients (so crossfades stay invisible).
+   The rhythmic path *wants* a gentle beat — that's fine, it's looped/extended, not crossfaded.
+4. **Beatless path only:** one prompt, four seeds — identical tags across the four segments so
+   any one crossfades into any other. (Rhythmic tracks are one continuous take, so N/A.)
 
-Load ComfyUI's built-in **ACE-Step text-to-audio template** (Templates → Audio → ACE-Step).
+### Stereo movement — the Brain.fm sweep
+
+Added in **post, not by tags** (ACE-Step won't give a clean rhythmic pan). The assembly script
+applies it with ffmpeg:
+- **Auto-pan** (`apulsator`) — a slow L→R→L sweep for depth and motion. **Loop-phase-locked:**
+  the pan rate is chosen so a whole number of sweep cycles fit the loop (and an even number of
+  bars on rhythmic tracks), so the stereo image is in the same place at the wrap — otherwise
+  the loop point jumps.
+- **Gentle widening** (`stereotools`/`extrastereo`) for richness, kept mono-compatible.
+- **Pronounced on Energy & Creativity;** a much slower, subtler version optional on Deep Focus
+  & Calm for depth. `wide stereo` is in the tags too, to give the panner a wide field.
+- **Optional:** a very gentle beat-synced amplitude **tremolo** (`apulsator`/`tremolo`) for the
+  full Brain.fm "neural-phase" pulsing. Same pass; hold unless you want it.
+
+### ComfyUI settings (per render)
+
+Load the **ACE-Step 1.5 Turbo** template (Base needs a checkpoint we don't have yet).
 
 | Field | Value |
 |---|---|
-| Checkpoint | `ace_step_v1_3.5b.safetensors` |
-| **Tags** | the per-track string below (same for all 4 segments of a track) |
-| **Lyrics** | *leave empty* — `instrumental` is already in the tags |
-| Duration (`EmptyAceStepLatentAudio` → seconds) | **~240** (≈4:00; gives trim headroom for the ~15-min target) |
-| **Seed** | the four values listed per track (change it between the 4 runs) |
-| Steps | ~50 |
-| CFG / guidance | ~4.5–5 (lower = more natural for ambient; higher over-follows the tags) |
-| Sampler / scheduler / shift | template defaults (typically `euler` / `simple` / shift ~3) |
-| Save as | **FLAC or 24/32-bit WAV**, 44.1 kHz stereo — *not* MP3 yet (encode once, at the end) |
+| Model variant | whichever you have — **use one variant for all 20** (family consistency) |
+| **Tags** | the per-track string below |
+| **Lyrics** | **`[inst]`** (an *empty* lyrics box can make ACE-Step output near-silence — use `[inst]`) |
+| Duration (`EmptyAceStepLatentAudio` → seconds) | **~240** for beatless segments; for rhythmic, the seed length before extend |
+| **Seed** | listed per track (beatless: 4 seeds; rhythmic: one seed for the take you extend) |
+| **Steps / CFG / sampler / shift** | **use the loaded template's defaults — do NOT force numbers.** Turbo ≈ 8–10 steps, cfg ≈ 1; Base ≈ 50 steps, cfg ≈ 5. Forcing cfg 5 on a Turbo model produces near-silence + noise. |
+| Save as | **FLAC** (Save Audio · Advanced), 44.1 kHz stereo — encode to MP3 once, at the end |
 
-**File naming:** save the four takes as `<id>-1.wav … <id>-4.wav`, e.g.
-`deep-focus-fathom-1.wav`. The `<id>` values are the keys below and match `tracks.js`.
+**File naming:** beatless takes → `<id>-1.flac … <id>-4.flac` (e.g. `deep-focus-fathom-1.flac`).
+Rhythmic take → `<id>.flac` (single continuous take before extend).
 
 ### Assembly (ffmpeg — script to come, not yet written)
 
-Per track, from the four segment files → one `<id>.mp3`:
-1. **Loudness-normalise** each segment (EBU R128, ~-17 LUFS) so levels match at the joins.
-2. **Trim** ~3–5s of ACE-Step's soft intro/outro ramp off each segment's ends.
-3. **Equal-power crossfade** segment 1→2→3→4 (~8s overlaps) into one ~15-min piece.
-4. **Wrap-around crossfade** the piece's tail into its head (~8s) — the seamless native-loop
-   point, since the player loops with no crossfade of its own.
-5. **Encode** MP3 256 kbps CBR, 44.1 kHz → `<id>.mp3`, then upload to R2 (`focus-music-audio`,
-   Worker-only, served through the `cad_stream` cookie gate).
+**Beatless tracks** (Deep Focus, Calm), four segments → one `<id>.mp3`:
+1. **Loudness-normalise** each segment (EBU R128, ~-17 LUFS).
+2. **Trim** ~3–5s of ACE-Step's soft intro/outro ramp off each end.
+3. **Equal-power crossfade** 1→2→3→4 (~8s overlaps) into one ~15-min piece.
+4. **Wrap-around crossfade** tail into head (~8s) — the seamless loop point.
+5. Optional subtle **auto-pan + widen** (loop-phase-locked).
+6. **Encode** MP3 256 kbps CBR, 44.1 kHz → `<id>.mp3`.
+
+**Rhythmic tracks** (Energy, Creativity), one continuous take → one `<id>.mp3`:
+1. **Loudness-normalise** to ~-17 LUFS.
+2. **Trim to a whole number of bars** at the chosen tempo (so the loop closes on a downbeat).
+3. **Close the loop** on the downbeat (tiny beat-aligned splice, or a very short crossfade).
+4. **Auto-pan + widen** — pronounced, **loop-phase-locked to an even number of bars**.
+5. **Encode** MP3 256 kbps CBR → `<id>.mp3`.
+
+Then upload all to R2 (`focus-music-audio`, Worker-only, served via the `cad_stream` cookie).
 
 > ffmpeg is **not** on the primary dev machine yet (`command -v ffmpeg` fails). Decide whether
-> assembly runs on the GPU box (usually already has ffmpeg) or locally after installing it.
+> assembly runs on the GPU box (usually already has it) or locally after installing it.
 
 ### Per-track tags
 
-For each track: **paste the same Tags string four times, changing only the Seed** to the four
-listed values. Leave the Lyrics box empty. Seeds are arbitrary but recorded here so any track
-(or one bad segment) can be regenerated exactly.
+For **beatless** tracks: paste the same Tags string four times, changing only the Seed to the
+four listed values. For **rhythmic** tracks: use the single listed seed, generate one take, then
+extend it. **Lyrics box = `[inst]`** everywhere. Seeds are recorded for reproducibility.
 
-#### Deep Focus — beatless, dark, modal
+#### Deep Focus — beatless, dark, modal *(4 seeds, crossfaded)*
 
 **Fathom** — `deep-focus-fathom` · D minor · beatless · seeds 1010, 1011, 1012, 1013
 `deep ambient, dark ambient, submerged, slow evolving drones, warm low pads, subtle sub-bass, hypnotic, still, spacious reverb, beatless, no percussion, no sharp transients, minimal, sustained, no build, continuous, instrumental, D minor`
@@ -202,41 +231,41 @@ listed values. Leave the Lyrics box empty. Seeds are arbitrary but recorded here
 **The Deep** — `deep-focus-the-deep` · C minor · beatless · seeds 1050, 1051, 1052, 1053
 `very deep ambient, cavernous sub-bass drone, vast, dark, still, near-silent, ultra minimal, no melody, distant, spacious reverb, beatless, no percussion, no sharp transients, sustained, no build, continuous, instrumental, C minor`
 
-#### Energy — legato pulse, bright, fixed key + BPM, no build
+#### Energy — gentle steady beat, bright, subtle motif *(one take, extend)*
 
-**Overture** — `energy-overture` · A minor · 100 BPM · seeds 2010, 2011, 2012, 2013
-`minimalist neoclassical, flowing legato ostinato, warm strings, soft piano, clean, awake, bright, steady even momentum, sustained, no crescendo, no build, no percussion, no sharp transients, spacious, instrumental, A minor, 100 bpm`
+**Overture** — `energy-overture` · A minor · 100 BPM · seed 2010
+`electronic focus music, gentle steady beat, soft kick, light hi-hats, warm sub-bass pulse, bright synth arpeggio, subtle uplifting motif, clean, awake, driving but relaxed, even energy, steady groove, no build, no drop, no fills, wide stereo, spacious, instrumental, A minor, 100 bpm`
 
-**First Light** — `energy-first-light` · C major · 104 BPM · seeds 2020, 2021, 2022, 2023
-`uplifting minimalist, gentle legato ostinato, warm strings, soft piano, bright, hopeful, dawn, steady even motion, sustained, no crescendo, no build, no percussion, no sharp transients, spacious, instrumental, C major, 104 bpm`
+**First Light** — `energy-first-light` · C major · 104 BPM · seed 2020
+`electronic focus music, warm downtempo beat, soft kick, brushed hi-hats, warm bass pulse, bright piano and synth motif, hopeful, dawn, gentle momentum, even energy, steady groove, no build, no drop, no fills, wide stereo, spacious, instrumental, C major, 104 bpm`
 
-**Ascent** — `energy-ascent` · D major · 106 BPM · seeds 2030, 2031, 2032, 2033
-`bright minimalist, steady legato arpeggio ostinato, warm strings, elevated, purposeful, awake, even sustained energy, plateau, no crescendo, no build, no percussion, no sharp transients, spacious, instrumental, D major, 106 bpm`
+**Ascent** — `energy-ascent` · D major · 108 BPM · seed 2030
+`electronic focus music, propulsive but relaxed beat, soft kick, tight hi-hats, driving warm bassline, bright arpeggio, subtle motif, elevated, purposeful, even sustained energy, steady groove, no build, no drop, no fills, wide stereo, instrumental, D major, 108 bpm`
 
-**Ignition** — `energy-ignition` · E minor · 110 BPM · seeds 2040, 2041, 2042, 2043
-`minimalist, taut flowing ostinato, muted strings, soft synth pulse, focused, precise, restrained drive, steady even energy, sustained, no crescendo, no build, no percussion, no sharp transients, instrumental, E minor, 110 bpm`
+**Ignition** — `energy-ignition` · E minor · 112 BPM · seed 2040
+`electronic focus music, tight driving beat, punchy soft kick, crisp hi-hats and shaker, focused warm bassline, muted arpeggio, precise motif, propulsive, energised, even energy, steady groove, no build, no drop, no fills, wide stereo, instrumental, E minor, 112 bpm`
 
-**Prelude** — `energy-prelude` · G major · 102 BPM · seeds 2050, 2051, 2052, 2053
-`minimalist neoclassical, poised legato piano ostinato, soft strings, clean, focused, ready, steady even motion, sustained, no crescendo, no build, no percussion, no sharp transients, spacious, instrumental, G major, 102 bpm`
+**Prelude** — `energy-prelude` · G major · 102 BPM · seed 2050
+`electronic focus music, poised gentle beat, soft kick, light hats, warm bass pulse, bright piano ostinato, subtle motif, clean, ready, focused, even energy, steady groove, no build, no drop, no fills, wide stereo, spacious, instrumental, G major, 102 bpm`
 
-#### Creativity — spacious, colourful, soft long-decay tones
+#### Creativity — light beat, colourful, evolving motif *(one take, extend)*
 
-**Constellation** — `creativity-constellation` · C Lydian · 90 BPM · seeds 3010, 3011, 3012, 3013
-`ambient, soft glassy bell tones with long reverb tails, airy pads, spacious, generative, wonder, floating, warm reverb, no percussion, no sharp transients, sustained, even, no build, continuous, instrumental, C lydian, 90 bpm`
+**Constellation** — `creativity-constellation` · C Lydian · 90 BPM · seed 3010
+`electronic focus music, gentle downtempo beat, soft kick, soft rimshot, light percussion, warm bass, glassy bell and pluck melody, sparkling, generative, curious, spacious, even energy, steady groove, no build, no drop, wide stereo, instrumental, C lydian, 90 bpm`
 
-**Ideation** — `creativity-ideation` · F major · 92 BPM · seeds 3020, 3021, 3022, 3023
-`bright ambient, soft mallet tones with long decay, warm pads, playful, curious, open, unhurried, gentle motion, spacious reverb, no percussion, no sharp transients, sustained, even, no build, continuous, instrumental, F major, 92 bpm`
+**Ideation** — `creativity-ideation` · F major · 92 BPM · seed 3020
+`electronic focus music, light playful beat, soft kick, brushed percussion, warm bass, bright marimba and mallet melody, curious, open, unhurried, uplifting, even energy, steady groove, no build, no drop, wide stereo, spacious, instrumental, F major, 92 bpm`
 
-**Synthesis** — `creativity-synthesis` · D major · 94 BPM · seeds 3030, 3031, 3032, 3033
-`warm electronic ambient, interweaving synth layers, evolving harmony, converging textures, bright, cinematic, spacious reverb, no percussion, no sharp transients, sustained, even, no build, continuous, instrumental, D major, 94 bpm`
+**Synthesis** — `creativity-synthesis` · D major · 94 BPM · seed 3030
+`electronic focus music, warm downtempo beat, soft kick, gentle hats, rounded bassline, interweaving synth and pluck melody, evolving harmony, bright, flowing, even energy, steady groove, no build, no drop, wide stereo, instrumental, D major, 94 bpm`
 
-**Lattice** — `creativity-lattice` · A major · 96 BPM · seeds 3040, 3041, 3042, 3043
-`minimalist ambient, interlocking soft arpeggios, crystalline synth with long reverb, geometric, bright, generative, spacious, no percussion, no sharp transients, sustained, even, no build, continuous, instrumental, A major, 96 bpm`
+**Lattice** — `creativity-lattice` · A major · 96 BPM · seed 3040
+`electronic focus music, crisp light beat, soft kick, tight percussion, warm bass, interlocking bright arpeggios, crystalline melodic pattern, geometric, generative, even energy, steady groove, no build, no drop, wide stereo, instrumental, A major, 96 bpm`
 
-**Aperture** — `creativity-aperture` · E major · 88 BPM · seeds 3050, 3051, 3052, 3053
-`expansive ambient, wide airy pads, shimmering synth, luminous, open space, calm wonder, weightless, spacious reverb, no percussion, no sharp transients, sustained, even, no build, continuous, instrumental, E major, 88 bpm`
+**Aperture** — `creativity-aperture` · E major · 88 BPM · seed 3050
+`electronic focus music, soft airy beat, gentle kick, light percussion, warm bass, wide shimmering synth, spacious pluck melody, luminous, open, expansive, even energy, steady groove, no build, no drop, wide stereo, spacious, instrumental, E major, 88 bpm`
 
-#### Calm — beatless, warm, resolved, blurred
+#### Calm — beatless, warm, resolved, blurred *(4 seeds, crossfaded)*
 
 **Vespers** — `calm-vespers` · F major · beatless · seeds 4010, 4011, 4012, 4013
 `warm ambient, soft felt piano, gentle pads, tape hiss, hazy, intimate, candlelit, tender, lo-fi warmth, spacious reverb, beatless, no percussion, no sharp transients, sustained, no build, continuous, instrumental, F major`
