@@ -1,12 +1,25 @@
 # Cadenzia
 
-Premium focus music for serious knowledge workers. Curated instrumental audio —
-ambient compositions and rhythmic soundscapes — engineered to stay out of your
-way: no words, nothing sudden, a steady floor that masks distraction.
+Focus music for serious knowledge workers. **Acoustic piano, played and recorded
+by hand** — never generated — made to stay out of your way: no words, nothing
+sudden, a steady floor that masks distraction.
 
 > The name comes from *cadenza*: the virtuoso passage where a performer reaches
 > their peak. The product name is centralised in
 > [`src/utils/config.js`](src/utils/config.js) (`APP_NAME`) and the PWA manifest.
+
+> ### ⚠️ Pre-launch: payments are switched OFF
+>
+> Cadenzia cannot take money right now, by design — the catalogue is still being
+> recorded. `POST /api/subscription/checkout` returns **503** while the Worker's
+> `PAYMENTS_ENABLED` var is `"false"` (the real guard), and the client's
+> `VITE_PAYMENTS_ENABLED` flag replaces every subscribe CTA with *"In development
+> — come back soon."*
+>
+> **Both must be turned on to launch — see
+> [`docs/go-live-checklist.md`](docs/go-live-checklist.md) first.** Stripe also
+> needs a full re-setup: the account was replaced in July 2026 and the deployed
+> secrets still point at the old, abandoned one.
 
 ---
 
@@ -21,7 +34,7 @@ way: no words, nothing sudden, a steady floor that masks distraction.
 | Backend  | Cloudflare Workers (API + static assets + R2 audio streaming) |
 | Storage  | Cloudflare R2 (audio), Cloudflare KV (sign-in codes + rate-limit buckets) |
 | Database | Cloudflare D1 (SQLite) |
-| Payments | Stripe (hosted Checkout + Billing Portal + signature-verified webhook) |
+| Payments | Stripe (hosted Checkout + Billing Portal + signature-verified webhook) — **currently disabled, see above** |
 | Email    | Resend (sign-in codes + new-track announcements) |
 
 ## Brand system
@@ -45,9 +58,11 @@ A warm, editorial, **light** aesthetic — gallery paper, not a dark app.
 
 ## What's built
 
-- **Four categories, 20 tracks** ([`src/utils/tracks.js`](src/utils/tracks.js)):
-  Deep Focus, Energy, Creativity, Calm — each mapped to one of four generative
-  artwork languages.
+- **Three categories, 10 pieces** ([`src/utils/tracks.js`](src/utils/tracks.js)):
+  Deep Focus, Creativity, Calm — each mapped to a generative artwork language.
+  Every piece is an **acoustic piano performance, played and recorded by hand** —
+  nothing is generated. Pieces are through-composed (they end rather than loop)
+  and run roughly 8–12 minutes, so lengths vary as performances do.
 - **Generative artwork** ([`src/utils/artwork.js`](src/utils/artwork.js)) —
   deterministic SVG seeded by track id (deep water, abstracted score, constellation,
   candlelight), one slow ambient animation, reduced-motion aware.
@@ -58,17 +73,22 @@ A warm, editorial, **light** aesthetic — gallery paper, not a dark app.
   synthetic ambient waveform (no analyser — nothing routes through Web Audio, which
   iOS suspends on background/lock). Large artwork, minimal controls, session timer.
   Library + now-playing + session panel, bottom sheet on mobile.
-- **Two tiers** — Free is an hour of open listening per day, no account needed
-  (pooled across sessions, resets at local midnight); then a calm interstitial
-  offers *subscribe* or *continue free today* ([`src/hooks/useSession.js`](src/hooks/useSession.js),
-  [`src/components/GateInterstitial.jsx`](src/components/GateInterstitial.jsx)).
-  **Premium ($4.99/mo) removes the daily limit** — unlimited, uninterrupted
-  streaming. (Streaming-only — no file downloads; reliable offline on iOS would
-  need a native wrapper, deferred as a post-launch decision.)
-- **Sharing** — offered as a personal achievement ("3 hours of deep focus") on
-  positive surfaces, never at the gate: a plain link with the artwork card, Web
-  Share API plus platform-intent fallbacks (X/LinkedIn/Facebook)
-  ([`src/components/FocusShare.jsx`](src/components/FocusShare.jsx)).
+- **Two tiers, gated on catalogue — never on time.** Free is a collection of
+  pieces (one per category, flagged `free` in `tracks.js`) that plays
+  uninterrupted, with no account, no clock and no daily cap. **Premium ($4.99/mo)
+  opens the full library and every new piece as it's recorded.** Nothing in the
+  app stops the music: auto-advance only ever selects a piece the listener can
+  play (`nextTrack(id, isSubscriber)`), and reaching for a piece from the full
+  collection opens a dialog *over* the still-playing music
+  ([`src/components/PremiumInvite.jsx`](src/components/PremiumInvite.jsx)).
+  (Streaming-only — no file downloads; reliable offline on iOS would need a
+  native wrapper, deferred as a post-launch decision.)
+- **Sharing** — never a toll and never an interruption. Offered as a personal
+  achievement ("3 hours of deep focus") on positive surfaces
+  ([`src/components/FocusShare.jsx`](src/components/FocusShare.jsx)), and as a
+  decoupled word-of-mouth invitation beneath the premium offer, framed by the
+  no-ads ethos. A plain link with the artwork card: Web Share API plus
+  platform-intent fallbacks (X/LinkedIn/Facebook).
 - **Play counter** — honest social proof, D1-backed, atomically incremented
   on track completion, held back below a threshold
   ([`src/components/PlayCounter.jsx`](src/components/PlayCounter.jsx)).

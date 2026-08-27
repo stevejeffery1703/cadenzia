@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { startCheckout } from '../utils/stripe';
 import { getToken } from '../utils/api';
 import { useEmailSignIn } from '../hooks/useEmailSignIn';
-import { PRICE, APP_NAME } from '../utils/config';
+import { PRICE, APP_NAME, PAYMENTS_ENABLED, PRELAUNCH_NOTE } from '../utils/config';
 
 // The paid tier, presented quietly. No card fields here — the Worker creates a
 // Stripe Checkout Session and we hand off to Stripe's secure page. If the listener
@@ -43,12 +43,25 @@ export default function SubscribeModal({ open, onClose }) {
         aria-modal="true"
         aria-label="Subscribe"
       >
-        <h2 className="text-h2 text-ink">Uninterrupted.</h2>
+        <h2 className="text-h2 text-ink">The full collection.</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          No daily limit — uninterrupted focus for as long as you work. It keeps playing while you
-          work in other apps or your screen sleeps, and new tracks are added regularly.
+          Every piece in the library, and every new one as it's recorded — acoustic piano, played
+          and mastered by hand. It keeps playing while you work in other apps or your screen sleeps.
         </p>
 
+        {/* Payments are off pre-launch. The server refuses checkout regardless
+            (503), but never show a payment flow we can't honour. */}
+        {!PAYMENTS_ENABLED ? (
+          <>
+            <p className="mt-6 rounded-lg border border-line bg-paper-wash px-4 py-3 text-sm text-ink-soft">
+              {PRELAUNCH_NOTE}
+            </p>
+            <button type="button" onClick={onClose} className="btn-ghost mt-5 w-full">
+              Back to listening
+            </button>
+          </>
+        ) : (
+          <>
         <div className="mt-6 flex items-baseline gap-2 border-y border-line py-4">
           <span className="font-display text-4xl font-light text-ink">${PRICE.amount}</span>
           <span className="text-ink-soft">/ month</span>
@@ -117,6 +130,8 @@ export default function SubscribeModal({ open, onClose }) {
         <p className="text-caption mt-5 text-center">
           Secure checkout by Stripe. {APP_NAME} never sees your card details.
         </p>
+          </>
+        )}
       </div>
     </div>
   );

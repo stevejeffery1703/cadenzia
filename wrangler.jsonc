@@ -12,6 +12,20 @@
     "enabled": true
   },
 
+  "vars": {
+    // ⚠️ PRE-LAUNCH PAYMENTS KILL SWITCH — deliberately "false".
+    // Cadenzia is still in development (the piano catalogue is being recorded),
+    // so nothing may take money yet. While this is off, POST
+    // /api/subscription/checkout refuses to create a Stripe Checkout Session and
+    // returns 503, regardless of what the client sends. This is the real guard;
+    // the client's VITE_PAYMENTS_ENABLED only hides the buttons.
+    // TO GO LIVE: set this to "true" AND build with VITE_PAYMENTS_ENABLED=true.
+    // Do not flip it before working through docs/go-live-checklist.md — the
+    // Stripe account was replaced in July 2026 and its full setup (keys, price,
+    // webhook, Managed Payments, tax code) must be redone and re-verified first.
+    "PAYMENTS_ENABLED": "false"
+  },
+
   // Serve the Vite build output as static assets. run_worker_first: true so
   // every request reaches the Worker before falling back to static serving —
   // needed for two things in src/worker/index.js: reporting a real 404 for

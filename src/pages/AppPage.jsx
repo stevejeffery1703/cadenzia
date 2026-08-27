@@ -1,66 +1,62 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getCategory } from '../utils/tracks';
-import { APP_NAME } from '../utils/config';
+import { getCategory, canPlay } from '../utils/tracks';
+import { APP_NAME, PAYMENTS_ENABLED } from '../utils/config';
 import { useAudio, formatTime } from '../hooks/useAudio';
-import { useSession } from '../hooks/useSession';
 import { useFocusStats } from '../hooks/useFocusStats';
 import { recordPlay } from '../utils/plays';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import Library from '../components/Library';
 import Player from '../components/Player';
 import FocusShare from '../components/FocusShare';
-import GateInterstitial from '../components/GateInterstitial';
+import PremiumInvite from '../components/PremiumInvite';
 import SubscribeModal from '../components/SubscribeModal';
 
 // The player. Library on the left, now-playing in the centre, session on the
-// right. The one-hour free gate surfaces as a calm interstitial — never a wall,
-// never mid-track beyond the natural pause.
+// right.
+//
+// Nothing in here interrupts the music. There is no clock, no daily limit and no
+// surface that stops playback to ask for anything: once a piece is playing it
+// plays, and auto-advance only ever moves to another piece the listener can
+// play. The paid tier is the size of the library, not the length of the session
+// — so the only prompt is the one a listener triggers by reaching for a piece
+// from the full collection, and even that leaves the music running underneath.
 export default function AppPage({ subscription }) {
   useDocumentHead('/app');
   const { isSubscriber } = subscription;
-  const [showGate, setShowGate] = useState(false);
+  const [invite, setInvite] = useState(null); // the locked piece they reached for
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [params, setParams] = useSearchParams();
 
-  const session = useSession({ isSubscriber });
   const focus = useFocusStats();
 
   const audio = useAudio({
+    isSubscriber,
     onTick: (_, track) => {
-      // Focus stats count for everyone; the gate clock only for free listeners.
       if (track) focus.addSecond(track.categoryId);
-      if (!isSubscriber) session.addSecond();
     },
     onTrackComplete: () => {
       recordPlay();
     },
   });
 
-  // Deep link ?subscribe=1 opens checkout (from nav + pricing CTAs).
+  // Deep link ?subscribe=1 opens checkout (from nav + pricing CTAs). Ignored
+  // while payments are off, so a stale or shared link can't surface a payment
+  // flow we can't honour — the server refuses checkout anyway (503).
   useEffect(() => {
     if (params.get('subscribe') === '1') {
-      setShowSubscribe(true);
+      if (PAYMENTS_ENABLED) setShowSubscribe(true);
       params.delete('subscribe');
       setParams(params, { replace: true });
     }
   }, [params, setParams]);
 
-  // Cross the day's hour → fade the music down gently and offer the calm choice.
-  // announceGate leaves a lock-screen note for a listener who's backgrounded and
-  // won't see the interstitial until they return.
-  useEffect(() => {
-    if (session.gateReached && audio.playing) {
-      audio.pauseForGate();
-      audio.announceGate();
-      setShowGate(true);
-    }
-  }, [session.gateReached, audio.playing, audio]);
-
   const handlePlay = (track) => {
-    if (session.gateReached) {
-      setShowGate(true);
+    // Reaching for a piece from the full collection opens the invitation — and
+    // deliberately does NOT touch playback. Whatever is playing keeps playing.
+    if (!canPlay(track, isSubscriber)) {
+      setInvite(track);
       return;
     }
     audio.loadTrack(track, { autoplay: true });
@@ -78,24 +74,18 @@ export default function AppPage({ subscription }) {
       <div className="grid gap-10 lg:grid-cols-[300px_1fr_260px]">
         {/* Library — left on desktop, bottom sheet on mobile. */}
         <aside className="hidden lg:block">
-          <Library currentTrackId={audio.track?.id} onPlay={handlePlay} />
+          <Library
+            currentTrackId={audio.track?.id}
+            onPlay={handlePlay}
+            isSubscriber={isSubscriber}
+          />
         </aside>
 
-        <Player
-          audio={audio}
-          onResume={handlePlay}
-          freeNote={!isSubscriber ? freeStatusText(session) : null}
-        />
+        <Player audio={audio} onResume={handlePlay} />
 
         {/* Session — right on desktop only. */}
         <aside className="hidden lg:block">
-          <SessionPanel
-            audio={audio}
-            session={session}
-            focus={focus}
-            category={category}
-            isSubscriber={isSubscriber}
-          />
+          <SessionPanel audio={audio} focus={focus} category={category} />
         </aside>
       </div>
 
@@ -117,24 +107,21 @@ export default function AppPage({ subscription }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-line" />
-            <Library currentTrackId={audio.track?.id} onPlay={handlePlay} />
+            <Library
+              currentTrackId={audio.track?.id}
+              onPlay={handlePlay}
+              isSubscriber={isSubscriber}
+            />
           </div>
         </div>
       )}
 
-      <GateInterstitial
-        open={showGate}
-        track={audio.track}
-        onClose={() => setShowGate(false)}
-        onContinue={() => {
-          // Unlock the rest of today and resume the music underneath; the gate
-          // stays open and transitions to the word-of-mouth invitation, then
-          // closes on "Back to listening" (see GateInterstitial).
-          session.unlockSession();
-          audio.play();
-        }}
+      <PremiumInvite
+        open={!!invite}
+        track={invite}
+        onClose={() => setInvite(null)}
         onSubscribe={() => {
-          setShowGate(false);
+          setInvite(null);
           setShowSubscribe(true);
         }}
       />
@@ -144,21 +131,9 @@ export default function AppPage({ subscription }) {
   );
 }
 
-// The free-tier status line, shared by the desktop session rail and the mobile
-// player readout so they never drift. As the hour runs low it also reassures
-// that the limit is a soft pause, not a wall — so a first-time listener isn't
-// deterred, and discovers they can simply carry on.
-function freeStatusText(session) {
-  if (session.unlocked) return 'Listening free for the rest of today';
-  const left = session.minutesRemaining;
-  if (left <= 0) return 'Free hour used for today';
-  if (left <= 10) return `${left} min free left — then a brief pause, not a wall`;
-  return `${left} min of free listening left today`;
-}
-
 // Quiet session readout. Current piece, time in session, and an optional notes
-// field — no gamification, no streaks.
-function SessionPanel({ audio, session, focus, category, isSubscriber }) {
+// field — no gamification, no streaks, and no countdown.
+function SessionPanel({ audio, focus, category }) {
   const [notes, setNotes] = useState(() => localStorage.getItem('cad_notes') || '');
   useEffect(() => {
     localStorage.setItem('cad_notes', notes);
@@ -176,7 +151,6 @@ function SessionPanel({ audio, session, focus, category, isSubscriber }) {
       <div>
         <p className="text-label text-ink-soft">In session</p>
         <p className="mt-2 font-display text-2xl tabular-nums text-ink">{formatTime(audio.elapsed)}</p>
-        {!isSubscriber && <p className="text-caption mt-1">{freeStatusText(session)}</p>}
       </div>
 
       {focus.headline && <FocusShare headline={focus.headline} />}

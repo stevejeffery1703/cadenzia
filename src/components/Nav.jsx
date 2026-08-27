@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { APP_NAME, PRICE } from '../utils/config';
+import { APP_NAME, PRICE, PAYMENTS_ENABLED } from '../utils/config';
 import Logo from './Logo';
 
 // Quiet, sparse top bar. The mark and wordmark sit together; everything else is
@@ -27,9 +27,10 @@ export default function Nav({ isSubscriber, isSignedIn }) {
         <div className="flex items-center gap-7">
           {link('/app', 'Listen')}
           {link('/account', isSignedIn ? 'Account' : 'Sign in')}
-          {!isSubscriber && (
+          {/* No subscribe CTA while payments are off — see PAYMENTS_ENABLED. */}
+          {!isSubscriber && PAYMENTS_ENABLED && (
             <Link to="/app?subscribe=1" className="btn-primary hidden px-5 py-2 sm:inline-flex">
-              Unlimited · {PRICE.short}
+              Full collection · {PRICE.short}
             </Link>
           )}
         </div>

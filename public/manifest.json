@@ -1,7 +1,7 @@
 {
   "name": "Cadenzia",
   "short_name": "Cadenzia",
-  "description": "Find your cadence. Curated instrumental audio for deep focus, energy, creativity, and calm.",
+  "description": "Find your cadence. Acoustic piano for deep focus, creativity, and calm — played and recorded by hand.",
   "start_url": "/app",
   "scope": "/",
   "display": "standalone",

@@ -5,7 +5,7 @@ import { openBillingPortal } from '../utils/stripe';
 import { api } from '../utils/api';
 import { useEmailSignIn } from '../hooks/useEmailSignIn';
 import { useDocumentHead } from '../hooks/useDocumentHead';
-import { PRICE } from '../utils/config';
+import { PRICE, PAYMENTS_ENABLED, PRELAUNCH_NOTE } from '../utils/config';
 
 // Account. Minimal by design — sign in (which also syncs across devices),
 // subscription, and a plainly available way to delete everything.
@@ -94,7 +94,7 @@ export default function Account({ subscription }) {
     <main className="page-enter mx-auto max-w-3xl px-6 py-16">
       {justSubscribed && (
         <p className="mb-8 rounded-lg border border-line bg-paper-wash p-4 text-sm text-ink-soft">
-          Thank you — you're subscribed. No more daily limit.
+          Thank you — you're subscribed. The full collection is open.
         </p>
       )}
       <div className="flex items-center justify-between">
@@ -125,11 +125,17 @@ export default function Account({ subscription }) {
         ) : (
           <>
             <p className="mt-2 text-sm text-ink-soft">
-              You&rsquo;re on the free tier — an hour of listening a day.
+              You&rsquo;re on the free tier — the free pieces, with no limit on how long you listen.
             </p>
-            <a href="/app?subscribe=1" className="btn-primary mt-5 inline-flex">
-              Listen without limits — {PRICE.label}
-            </a>
+            {PAYMENTS_ENABLED ? (
+              <a href="/app?subscribe=1" className="btn-primary mt-5 inline-flex">
+                Open the full collection — {PRICE.label}
+              </a>
+            ) : (
+              <p className="mt-5 rounded-lg border border-line bg-paper-wash px-4 py-3 text-sm text-ink-soft">
+                {PRELAUNCH_NOTE}
+              </p>
+            )}
           </>
         )}
       </section>

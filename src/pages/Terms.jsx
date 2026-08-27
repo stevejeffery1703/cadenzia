@@ -16,9 +16,9 @@ export default function Terms() {
       </p>
 
       <Section title="The deal">
-        Every track is free to stream. Each day gives you an hour of open listening; after that,
-        subscribe to keep going, or come back tomorrow. Subscribing removes the daily limit for good,
-        and the library keeps growing.
+        A collection of pieces is free to stream, with no account and no time limit — nothing stops
+        the music, and there is no daily cap. Subscribing opens the full library and every new piece
+        as it is recorded. All of it is acoustic piano, played and recorded by hand.
       </Section>
 
       <Section title="Billing">

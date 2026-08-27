@@ -16,8 +16,12 @@ const PRINCIPLES = [
     body: 'Consistent, even sound masks the intermittent noise — a passing voice, a notification — that would otherwise break your concentration.',
   },
   {
-    title: 'The right energy',
-    body: 'Deep Focus, Energy, Creativity, and Calm each hold a different level of arousal, so you can match the sound to the work in front of you.',
+    title: 'The right level',
+    body: 'Deep Focus, Creativity, and Calm each hold a different level of arousal, so you can match the sound to the work in front of you.',
+  },
+  {
+    title: 'Played, not generated',
+    body: 'Every piece is an acoustic piano performance, recorded and mastered by hand. A real instrument in a real room gives the warmth and unevenness that generated audio flattens out — and it means a person decided every note you hear.',
   },
 ];
 
@@ -44,7 +48,7 @@ export default function Science() {
 
       <p className="mt-8 text-lg font-light leading-relaxed text-ink-soft">
         There is no magic frequency, and we do not claim one. The aim is quieter and more
-        honest: music <span className="text-ink">engineered to stay out of your way</span>.
+        honest: music <span className="text-ink">played to stay out of your way</span>.
         No words, nothing sudden, a steady acoustic floor that masks distraction — so the
         loudest thing in the room is the work.
       </p>

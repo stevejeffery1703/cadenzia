@@ -5,7 +5,7 @@ import Waveform from './Waveform';
 
 // The now-playing surface — large artwork, title, waveform, and the only
 // controls that matter. This is the product; nothing else competes with it.
-export default function Player({ audio, onResume, freeNote }) {
+export default function Player({ audio, onResume }) {
   const { track } = audio;
 
   if (!track) {
@@ -14,7 +14,7 @@ export default function Player({ audio, onResume, freeNote }) {
       <section className="flex min-h-[60vh] flex-col items-center justify-center text-center">
         <p className="text-h2 text-ink-soft">Choose something to begin.</p>
         <p className="mt-3 max-w-sm text-sm text-ink-faint">
-          Put your headphones on and pick a track that fits the moment.
+          Put your headphones on and pick a piece that fits the moment.
         </p>
         <p className="text-caption mt-2 max-w-sm">
           It keeps playing when you switch apps or lock your screen.
@@ -100,11 +100,6 @@ export default function Player({ audio, onResume, freeNote }) {
       </div>
 
       <p className="text-caption mt-6 tabular-nums">In session · {formatTime(audio.elapsed)}</p>
-
-      {/* Free-time readout for mobile, where the desktop session rail is hidden —
-          so a phone listener sees the hour (and that it's soft) rather than
-          meeting the gate with no warning. */}
-      {freeNote && <p className="text-caption mt-1 lg:hidden">{freeNote}</p>}
     </section>
   );
 }

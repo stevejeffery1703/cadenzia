@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCategory, nextTrack as nextInCategory } from '../utils/tracks';
-import { APP_NAME, FADE_IN_SECONDS, CROSSFADE_SECONDS, GATE_FADE_SECONDS } from '../utils/config';
+import { APP_NAME, FADE_IN_SECONDS, CROSSFADE_SECONDS } from '../utils/config';
 
 // Playback engine.
 //
@@ -31,7 +31,7 @@ export function getLastTrackId() {
   return localStorage.getItem(LAST_TRACK_KEY) || null;
 }
 
-export function useAudio({ onTick, onTrackComplete } = {}) {
+export function useAudio({ onTick, onTrackComplete, isSubscriber = false } = {}) {
   const elRef = useRef(null); // the single <audio> element
   const fadeRef = useRef(0); // active volume-tween rAF id
   const intentRef = useRef(false); // whether we intend to be playing (bg recovery)
@@ -50,6 +50,10 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
   const volumeRef = useRef(volume);
   const trackRef = useRef(track);
   trackRef.current = track;
+  // Auto-advance must only ever pick a piece this listener can play, and it runs
+  // from a listener wired once on mount — so read entitlement through a ref.
+  const subRef = useRef(isSubscriber);
+  subRef.current = isSubscriber;
   const cbRef = useRef({ onTick, onTrackComplete });
   cbRef.current = { onTick, onTrackComplete };
   // onEnded (wired once, on mount) needs the latest loadTrack without
@@ -148,7 +152,7 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
       if (el.loop) return; // native loop re-plays; 'ended' won't fire, but be safe
       const t = trackRef.current;
       cbRef.current.onTrackComplete?.(t);
-      const n = t ? nextInCategory(t.id) : null;
+      const n = t ? nextInCategory(t.id, subRef.current) : null;
       if (n) {
         loadTrackRef.current?.(n, { autoplay: true });
       } else {
@@ -177,18 +181,18 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Per-second session clock. Drives the free-tier gate. (Throttles in the
-  // background, which only makes the free hour more generous — never less.)
+  // Per-second session clock — drives the "in session" readout and the local
+  // focus stats. Nothing here can stop playback: there is no timed gate.
   useEffect(() => {
     if (!playing) return undefined;
     const id = setInterval(() => {
       const el = elRef.current;
       const t = trackRef.current;
-      // Looping tracks (Deep Focus, Calm) never fire 'ended', so count each
-      // completed loop from accumulated play time — advancing tracks complete via
-      // 'ended' instead. Guarded on !el.paused so a stalled or dev-404 stream
-      // (which leaves `playing` optimistically true) can't "finish" a track in
-      // silence, and so an hour of looping records real time, not one play.
+      // A piece left on repeat never fires 'ended', so count each completed pass
+      // from accumulated play time — pieces that advance complete via 'ended'
+      // instead. Guarded on !el.paused so a stalled or dev-404 stream (which
+      // leaves `playing` optimistically true) can't "finish" a piece in silence,
+      // and so an hour on repeat records real time, not one play.
       if (t && t.loop && t.durationSeconds && el && !el.paused) {
         playedRef.current += 1;
         const completed = Math.floor(playedRef.current / t.durationSeconds);
@@ -209,17 +213,14 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
   const play = useCallback(() => {
     const el = elRef.current;
     if (!el || !el.src) return;
-    // Drop any in-flight fade (e.g. the gate's fade-out) so its queued el.pause()
-    // can't land after we resume — otherwise tapping "Continue free" mid-fade
-    // would fade in and then abruptly stop.
+    // Drop any in-flight fade so its queued el.pause() can't land after we
+    // resume — otherwise pressing play mid-fade would fade in, then stop.
     cancelFade();
     intentRef.current = true;
     setPlaying(true);
     applyVolume(0);
     el.play()
       .then(() => {
-        // Restore the track's own metadata — resuming after the gate replaces
-        // the "free hour is up" lock-screen notice with the now-playing piece.
         updateMediaSession(trackRef.current);
         fadeTo(1, FADE_IN_SECONDS);
       })
@@ -241,39 +242,6 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
       }
     });
   }, [fadeTo]);
-
-  // The daily gate. Fade the music down gently over a few seconds where volume
-  // is controllable; where it isn't (iOS), fadeTo collapses this to an immediate
-  // clean stop — harmless, since the looping categories are transient-free.
-  const pauseForGate = useCallback(() => {
-    const el = elRef.current;
-    intentRef.current = false;
-    setPlaying(false);
-    if (!el) return;
-    fadeTo(0, GATE_FADE_SECONDS, () => {
-      try {
-        el.pause();
-      } catch {
-        /* no-op */
-      }
-    });
-  }, [fadeTo]);
-
-  // Explain the pause on the lock screen / media controls, for a listener who's
-  // backgrounded when the gate lands and won't see the on-screen interstitial.
-  const announceGate = useCallback(() => {
-    if (!('mediaSession' in navigator)) return;
-    try {
-      // eslint-disable-next-line no-undef
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: 'Your free hour is up for today',
-        artist: 'Open Cadenzia to keep listening',
-        album: APP_NAME,
-      });
-    } catch {
-      /* MediaMetadata unavailable — non-fatal */
-    }
-  }, []);
 
   // Load a track on the single element. If something is already playing, dip the
   // volume out, swap the source, then fade back in — a clean transition with no
@@ -331,7 +299,7 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
   const skipNext = useCallback(() => {
     const t = trackRef.current;
     if (!t) return;
-    const n = nextInCategory(t.id);
+    const n = nextInCategory(t.id, subRef.current);
     if (n) loadTrack(n, { autoplay: true });
   }, [loadTrack]);
 
@@ -397,8 +365,6 @@ export function useAudio({ onTick, onTrackComplete } = {}) {
     loadTrack,
     play,
     pause,
-    pauseForGate,
-    announceGate,
     toggle,
     skipNext,
     toggleLoop,

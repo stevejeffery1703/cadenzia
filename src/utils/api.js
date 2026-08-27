@@ -34,7 +34,8 @@ export async function api(path, { method = 'GET', body, auth = false } = {}) {
 }
 
 // A stable anonymous device id, stored locally only. Currently just tags the
-// play-count ping; the free-tier daily limit lives in localStorage, not here.
+// play-count ping. There is no usage metering to send: the free tier is gated on
+// which pieces are available (utils/tracks.js), never on time listened.
 export function deviceId() {
   let id = localStorage.getItem('cad_device');
   if (!id) {

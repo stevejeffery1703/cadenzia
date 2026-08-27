@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '../utils/tracks';
-import { APP_NAME, PRICE } from '../utils/config';
+import { APP_NAME, PRICE, PAYMENTS_ENABLED, PRELAUNCH_NOTE } from '../utils/config';
 import { useDocumentHead } from '../hooks/useDocumentHead';
 import Artwork from '../components/Artwork';
 import Logo from '../components/Logo';
@@ -15,6 +15,7 @@ export default function Home() {
     <main className="page-enter">
       <Hero />
       <Previews />
+      <MadeByHand />
       <Proof />
       <Pricing />
       <Footer />
@@ -28,6 +29,9 @@ function Hero() {
       <Logo size={52} className="mb-7" />
       <h1 className="text-display text-accent">{APP_NAME}</h1>
       <p className="mt-6 text-xl font-light text-ink-soft">Find your cadence.</p>
+      <p className="mt-3 max-w-sm text-sm text-ink-faint">
+        Acoustic piano, played and recorded by hand.
+      </p>
       <Link to="/app" className="btn-primary mt-12">
         Begin listening
       </Link>
@@ -37,11 +41,11 @@ function Hero() {
 }
 
 function Previews() {
-  // All four categories, artwork forward. Let the work speak; no feature lists.
+  // Every category, artwork forward. Let the work speak; no feature lists.
   // Driven straight off CATEGORIES so it can't drift out of sync with the library.
   return (
     <section className="mx-auto max-w-content px-6 py-20">
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {CATEGORIES.map((c) => (
           <Link key={c.id} to="/app" className="group block">
             <Artwork
@@ -55,6 +59,25 @@ function Previews() {
             <p className="mt-1 text-sm text-ink-soft">{c.tagline}</p>
           </Link>
         ))}
+      </div>
+    </section>
+  );
+}
+
+// The one place the making is stated outright. Positive first — a real
+// instrument, a real player — with the absence of generated music as the quiet
+// consequence, not the banner. Confidence, not a manifesto.
+function MadeByHand() {
+  return (
+    <section className="mx-auto max-w-content px-6 pb-16">
+      <div className="panel mx-auto max-w-2xl p-9 text-center">
+        <p className="text-label text-ink-soft">How it's made</p>
+        <h2 className="text-h2 mt-3 text-ink">Someone sat down and played this.</h2>
+        <p className="mx-auto mt-5 max-w-lg text-sm leading-relaxed text-ink-soft">
+          Every piece here is an acoustic piano performance — played, recorded and mastered by
+          hand, one at a time. Nothing is generated, and nothing is assembled from a model. It is
+          simply the music we wanted to work to, made carefully enough to disappear into.
+        </p>
       </div>
     </section>
   );
@@ -74,21 +97,27 @@ function Pricing() {
   return (
     <section className="mx-auto max-w-content px-6 py-20">
       <div className="panel mx-auto max-w-md p-9 text-center">
-        <h2 className="text-h2 text-ink">Listen without limits.</h2>
+        <h2 className="text-h2 text-ink">The full collection.</h2>
         <div className="mt-6 flex items-baseline justify-center gap-2">
           <span className="font-display text-5xl font-light text-ink">${PRICE.amount}</span>
           <span className="text-ink-soft">/ month</span>
         </div>
         <p className="mx-auto mt-5 max-w-xs text-sm leading-relaxed text-ink-soft">
-          No daily limit — uninterrupted focus for as long as you work, with new tracks added
-          regularly. Renews monthly at ${PRICE.amount}; cancel anytime.
+          Every piece in the library, and every new one as it's recorded. Renews monthly at $
+          {PRICE.amount}; cancel anytime.
         </p>
-        <Link to="/app?subscribe=1" className="btn-primary mt-8 w-full">
-          Subscribe — {PRICE.label}
-        </Link>
+        {PAYMENTS_ENABLED ? (
+          <Link to="/app?subscribe=1" className="btn-primary mt-8 w-full">
+            Subscribe — {PRICE.label}
+          </Link>
+        ) : (
+          <p className="mt-8 rounded-lg border border-line bg-paper-wash px-4 py-3 text-sm text-ink-soft">
+            {PRELAUNCH_NOTE}
+          </p>
+        )}
         <p className="text-caption mt-4">
-          Free to begin. An hour of open listening a day — then a brief pause to carry on or come
-          back tomorrow, never a wall. Plays on with your screen off.
+          Free to begin, with no account. The free pieces play for as long as you like — no clock,
+          no daily limit, and nothing that stops the music. Plays on with your screen off.
         </p>
       </div>
     </section>

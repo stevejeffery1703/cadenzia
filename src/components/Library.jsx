@@ -1,11 +1,15 @@
-import { CATEGORIES, tracksByCategory } from '../utils/tracks';
+import { CATEGORIES, tracksByCategory, canPlay } from '../utils/tracks';
 import Artwork from './Artwork';
 
-// The library — every track, organised by category. Doubles as track detail:
-// each row carries the artwork, the title, its category, and length. Selecting a
-// row plays it and shows its full artwork and description in the now-playing
-// surface. Every track is available; listening is gated by time, not by track.
-export default function Library({ currentTrackId, onPlay }) {
+// The library — every piece, organised by category. Doubles as track detail:
+// each row carries the artwork, the title and its description. Selecting a row
+// plays it and shows its full artwork in the now-playing surface.
+//
+// Pieces outside the free collection stay visible and selectable — choosing one
+// opens the invitation rather than doing nothing, and never interrupts whatever
+// is currently playing. They're marked with a quiet dot, not a padlock: this is
+// a collection you haven't opened yet, not a thing being withheld.
+export default function Library({ currentTrackId, onPlay, isSubscriber = false }) {
   return (
     <div className="space-y-9">
       {CATEGORIES.map((category) => (
@@ -17,6 +21,7 @@ export default function Library({ currentTrackId, onPlay }) {
           <ul className="space-y-1">
             {tracksByCategory(category.id).map((track) => {
               const active = track.id === currentTrackId;
+              const locked = !canPlay(track, isSubscriber);
               return (
                 <li key={track.id}>
                   <button
@@ -34,12 +39,14 @@ export default function Library({ currentTrackId, onPlay }) {
                       size={120}
                       animate={false}
                       rounded="rounded-md"
-                      className="h-11 w-11 shrink-0 border border-line"
+                      className={`h-11 w-11 shrink-0 border border-line ${
+                        locked ? 'opacity-60' : ''
+                      }`}
                     />
                     <span className="min-w-0 flex-1">
                       <span
                         className={`block truncate font-display text-lg italic ${
-                          active ? 'text-accent' : 'text-ink'
+                          active ? 'text-accent' : locked ? 'text-ink-soft' : 'text-ink'
                         }`}
                       >
                         {track.name}
@@ -48,7 +55,7 @@ export default function Library({ currentTrackId, onPlay }) {
                         {track.description}
                       </span>
                     </span>
-                    {active && <PlayingDot />}
+                    {active ? <PlayingDot /> : locked ? <CollectionDot /> : null}
                   </button>
                 </li>
               );
@@ -62,4 +69,14 @@ export default function Library({ currentTrackId, onPlay }) {
 
 function PlayingDot() {
   return <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden />;
+}
+
+// Part of the full collection. An open ring, not a padlock.
+function CollectionDot() {
+  return (
+    <span
+      className="h-1.5 w-1.5 shrink-0 rounded-full border border-ink-soft"
+      title="Part of the full collection"
+    />
+  );
 }

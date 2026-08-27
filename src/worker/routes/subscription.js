@@ -39,7 +39,25 @@ async function stripe(env, path, params) {
   return data;
 }
 
+// Pre-launch payments kill switch. This is the REAL guard — it sits ahead of
+// everything else in the only route that can start a payment, so no Checkout
+// Session can be created while it's off, no matter what the client does (stale
+// UI, the /app?subscribe=1 deep link, a hand-rolled POST). The matching client
+// flag (VITE_PAYMENTS_ENABLED) only hides the buttons; it is cosmetic and must
+// never be relied on. Off unless PAYMENTS_ENABLED is exactly "true".
+// See docs/go-live-checklist.md — this must be turned on to launch.
+function paymentsEnabled(env) {
+  return String(env.PAYMENTS_ENABLED) === 'true';
+}
+
 export async function checkout(request, env) {
+  if (!paymentsEnabled(env)) {
+    return json(
+      { error: 'Subscriptions are not open yet. Cadenzia is still in development.' },
+      { status: 503, env }
+    );
+  }
+
   const claims = await authedUser(request, env);
   if (!claims) return json({ error: 'Sign in first' }, { status: 401, env });
 

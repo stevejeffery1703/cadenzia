@@ -7,17 +7,18 @@
 export const PAGE_META = {
   '/': {
     title: 'Cadenzia — Find your cadence',
-    description: 'Curated instrumental audio for deep focus, energy, creativity, and calm.',
+    description:
+      'Acoustic piano for deep focus, creativity, and calm — played and recorded by hand, never generated.',
   },
   '/app': {
     title: 'Listen — Cadenzia',
     description:
-      'Stream deep focus, energy, creativity, and calm audio — free for an hour every day.',
+      'Stream acoustic piano for deep focus, creativity, and calm. Free to begin, with no time limit.',
   },
   '/science': {
     title: 'The science, plainly — Cadenzia',
     description:
-      'How Cadenzia is made to hold your attention — instrumental, steady, and distraction-masking — with the research behind it.',
+      'How Cadenzia is made to hold your attention — acoustic, steady, and distraction-masking — with the research behind it.',
   },
   '/privacy': {
     title: 'Privacy — Cadenzia',

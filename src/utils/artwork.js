@@ -4,12 +4,13 @@
 // from its `seed` (the track id) — always identical for a given track, never
 // hand-drawn. The language is fine ink line-work on warm paper, like an engraving
 // or a page of liner notes, and it carries the brand motif throughout: notes,
-// sound waves, and wavy lines. Four visual languages, one per category:
+// sound waves, and wavy lines. One visual language per category:
 //
 //   depth         Deep Focus  — concentric depth contours over a warm glow
-//   score         Energy      — precise staff lines, a score abstracted
 //   constellation Creativity  — scattered notes connected by thin arcs
 //   candlelight   Calm        — diffuse warm washes, barely a line
+//   score         (unused)    — precise staff lines, a score abstracted. Kept
+//                               for a future category; nothing selects it now.
 //
 // Output is an SVG string. The same string powers the on-screen artwork and the
 // PNG rendered into share cards, so palette values are inlined (no CSS vars).
