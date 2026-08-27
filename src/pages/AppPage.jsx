@@ -9,6 +9,7 @@ import { useDocumentHead } from '../hooks/useDocumentHead';
 import Library from '../components/Library';
 import Player from '../components/Player';
 import FocusShare from '../components/FocusShare';
+import InstallPrompt from '../components/InstallPrompt';
 import PremiumInvite from '../components/PremiumInvite';
 import SubscribeModal from '../components/SubscribeModal';
 
@@ -24,6 +25,9 @@ import SubscribeModal from '../components/SubscribeModal';
 export default function AppPage({ subscription }) {
   useDocumentHead('/app');
   const { isSubscriber } = subscription;
+  // The install nudge is only offered to people who've made an account — a
+  // first-time listener shouldn't be asked to install anything.
+  const signedIn = !!subscription.user;
   const [invite, setInvite] = useState(null); // the locked piece they reached for
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -88,9 +92,14 @@ export default function AppPage({ subscription }) {
 
         {/* Session — right on desktop only. */}
         <aside className="hidden lg:block">
-          <SessionPanel audio={audio} focus={focus} category={category} />
+          <SessionPanel audio={audio} focus={focus} category={category} signedIn={signedIn} />
         </aside>
       </div>
+
+      {/* The install nudge on mobile, where installing actually matters. The
+          desktop copy lives in the session rail instead — anything after this
+          grid sits below the tall library column on a wide screen. */}
+      {signedIn && <InstallPrompt dismissible className="mt-10 lg:hidden" />}
 
       {/* Mobile: open the library. */}
       <button
@@ -136,7 +145,7 @@ export default function AppPage({ subscription }) {
 
 // Quiet session readout. Current piece, time in session, and an optional notes
 // field — no gamification, no streaks, and no countdown.
-function SessionPanel({ audio, focus, category }) {
+function SessionPanel({ audio, focus, category, signedIn }) {
   const [notes, setNotes] = useState(() => localStorage.getItem('cad_notes') || '');
   useEffect(() => {
     localStorage.setItem('cad_notes', notes);
@@ -157,6 +166,8 @@ function SessionPanel({ audio, focus, category }) {
       </div>
 
       {focus.headline && <FocusShare headline={focus.headline} />}
+
+      {signedIn && <InstallPrompt dismissible />}
 
       <div>
         <label htmlFor="notes" className="text-label text-ink-soft">

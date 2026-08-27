@@ -5,6 +5,7 @@ import { openBillingPortal } from '../utils/stripe';
 import { api } from '../utils/api';
 import { useEmailSignIn } from '../hooks/useEmailSignIn';
 import { useDocumentHead } from '../hooks/useDocumentHead';
+import InstallPrompt from '../components/InstallPrompt';
 import { PRICE, PAYMENTS_ENABLED, PRELAUNCH_NOTE } from '../utils/config';
 
 // Account. Minimal by design — sign in (which also syncs across devices),
@@ -139,6 +140,11 @@ export default function Account({ subscription }) {
           </>
         )}
       </section>
+
+      {/* The permanent home for the install offer. Not dismissible here, so
+          sending the player's nudge away loses the prompt, never the ability.
+          Renders nothing once installed, or where the platform can't. */}
+      <InstallPrompt className="mt-12" />
 
       <OwnerStats />
 
