@@ -13,6 +13,7 @@ import * as auth from './routes/auth.js';
 import * as subscription from './routes/subscription.js';
 import * as email from './routes/email.js';
 import * as plays from './routes/plays.js';
+import * as admin from './routes/admin.js';
 import { PAGE_META } from '../utils/pageMeta.js';
 
 // The app's real client-side routes — used to tell a genuine soft-404 apart
@@ -39,6 +40,9 @@ const ROUTES = {
   'POST /api/email/subscribe': email.subscribe,
   'GET /api/email/unsubscribe': email.unsubscribe,
   'POST /api/email/unsubscribe': email.unsubscribePost,
+
+  // Owner-only dashboard numbers; 404s for everyone else (see routes/admin.js).
+  'GET /api/admin/stats': admin.stats,
 };
 
 export default {

@@ -28,7 +28,7 @@ export const PAYMENTS_ENABLED = import.meta.env.VITE_PAYMENTS_ENABLED === 'true'
 
 // Shown wherever a subscribe CTA would be, while payments are off. Deliberately
 // quiet and unapologetic — the product is being made, not broken.
-export const PRELAUNCH_NOTE = 'In development — come back soon.';
+export const PRELAUNCH_NOTE = 'In development — come back soon';
 
 // Free tier: a collection of pieces that plays uninterrupted, forever, with no
 // account and no clock. There is deliberately no time limit and nothing that

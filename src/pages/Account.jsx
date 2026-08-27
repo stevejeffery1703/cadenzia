@@ -37,7 +37,7 @@ export default function Account({ subscription }) {
         <p className="mt-3 text-sm text-ink-soft">
           {sessionExpired
             ? "Your session expired. Sign in again to continue — there's no password to remember."
-            : "Enter your email and we'll send a one-time code — no password to remember. It's the same account you subscribe on, and it keeps you in sync across your devices."}
+            : "Enter your email and we'll send a one-time code — no password to remember."}
         </p>
 
         {signIn.step === 'email' ? (
@@ -140,6 +140,8 @@ export default function Account({ subscription }) {
         )}
       </section>
 
+      <OwnerStats />
+
       <section className="mt-12">
         <h2 className="text-label text-ink-soft">Delete account</h2>
         <p className="mt-2 text-sm text-ink-soft">
@@ -159,5 +161,54 @@ export default function Account({ subscription }) {
         </button>
       </section>
     </main>
+  );
+}
+
+// Owner-only numbers. The endpoint 404s for everyone else (and whenever
+// ADMIN_EMAIL isn't set), so this simply renders nothing for normal listeners —
+// there's no flag to get wrong on the client. Aggregate counts only: no
+// per-visitor tracking was added for this. Site traffic lives in Cloudflare
+// Analytics, which measures it properly and filters bots; these are the numbers
+// only the database knows.
+function OwnerStats() {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    let live = true;
+    api('/admin/stats', { auth: true })
+      .then((d) => live && setStats(d))
+      .catch(() => {}); // 404 for non-owners — expected, stay silent
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  if (!stats) return null;
+
+  const FIELDS = [
+    ['Plays', stats.plays],
+    ['Accounts', stats.users],
+    ['Subscribers', stats.subscribers],
+    ['Mailing list', stats.mailing],
+  ];
+
+  return (
+    <section className="mt-12">
+      <h2 className="text-label text-ink-soft">Yours only</h2>
+      <div className="panel mt-3 grid grid-cols-2 gap-px overflow-hidden bg-line sm:grid-cols-4">
+        {FIELDS.map(([label, value]) => (
+          <div key={label} className="bg-paper-raised px-4 py-5 text-center">
+            <p className="font-display text-3xl font-light tabular-nums text-ink">
+              {value === null || value === undefined ? '—' : value.toLocaleString()}
+            </p>
+            <p className="text-caption mt-1">{label}</p>
+          </div>
+        ))}
+      </div>
+      <p className="text-caption mt-3">
+        Only you can see this. For visits and traffic, see Cloudflare Analytics — it counts properly
+        and filters bots.
+      </p>
+    </section>
   );
 }

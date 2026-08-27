@@ -22,7 +22,7 @@ export const CATEGORIES = [
     name: 'Deep Focus',
     style: 'depth',
     accent: 'teal',
-    tagline: 'For the work that needs all of you.',
+    tagline: 'For the work that needs all of you',
     description:
       'Slow, low, and unhurried. Sustained chords and a line that barely moves — for long stretches of concentration: code, prose, proofs, the problem that does not yield quickly.',
     loop: false,
@@ -32,7 +32,7 @@ export const CATEGORIES = [
     name: 'Creativity',
     style: 'constellation',
     accent: 'teal',
-    tagline: 'Something is being made.',
+    tagline: 'Something is being made',
     description:
       'Brighter and more curious. Open voicings and a melody that wanders without hurrying — for design, strategy, writing, and the idea you have not had yet.',
     loop: false,
@@ -42,7 +42,7 @@ export const CATEGORIES = [
     name: 'Calm',
     style: 'candlelight',
     accent: 'gold',
-    tagline: 'Set the work down.',
+    tagline: 'Set the work down',
     description:
       'Soft at every edge — felt piano, close and warm, with the room left in. For light reading, gentle recovery, and the quiet between sessions.',
     loop: false,

@@ -10,14 +10,18 @@ export default function Player({ audio, onResume }) {
 
   if (!track) {
     const lastTrack = getTrack(getLastTrackId());
+    // Centred on mobile, where this is the whole page; near the top on desktop,
+    // where the tall library column sits alongside it.
     return (
-      <section className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-        <p className="text-h2 text-ink-soft">Choose something to begin.</p>
+      <section className="flex min-h-[55vh] flex-col items-center justify-center text-center lg:min-h-0 lg:justify-start lg:pt-10">
+        <p className="text-h2 text-ink-soft">Choose something to begin</p>
         <p className="mt-3 max-w-sm text-sm text-ink-faint">
           Put your headphones on and pick a piece that fits the moment.
         </p>
-        <p className="text-caption mt-2 max-w-sm">
-          It keeps playing when you switch apps or lock your screen.
+        {/* Background playback only needs saying where it's in doubt — on a
+            phone, where leaving the app or locking the screen is the norm. */}
+        <p className="text-caption mt-2 max-w-sm lg:hidden">
+          Continues playing even if you switch apps or activate lock screen.
         </p>
         {lastTrack && (
           <button

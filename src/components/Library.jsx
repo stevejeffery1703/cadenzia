@@ -39,7 +39,7 @@ export default function Library({ currentTrackId, onPlay, isSubscriber = false }
                       size={120}
                       animate={false}
                       rounded="rounded-md"
-                      className={`h-11 w-11 shrink-0 border border-line ${
+                      className={`h-14 w-14 shrink-0 border border-line ${
                         locked ? 'opacity-60' : ''
                       }`}
                     />
@@ -51,9 +51,12 @@ export default function Library({ currentTrackId, onPlay, isSubscriber = false }
                       >
                         {track.name}
                       </span>
-                      <span className="block truncate text-caption">
-                        {track.description}
-                      </span>
+                      {/* Wraps rather than truncating — the description is how
+                          you choose a piece, so it has to be readable in full.
+                          Rows vary in height by a line as a result, which is
+                          fine for a library list. Keep descriptions short enough
+                          in tracks.js that this stays to two or three lines. */}
+                      <span className="text-caption block">{track.description}</span>
                     </span>
                     {active ? <PlayingDot /> : locked ? <CollectionDot /> : null}
                   </button>

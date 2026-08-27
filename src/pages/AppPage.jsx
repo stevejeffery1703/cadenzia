@@ -71,7 +71,10 @@ export default function AppPage({ subscription }) {
           a heading, but the page still needs one real h1 that doesn't change
           every time a track is picked or skipped (see Player.jsx's h2). */}
       <h1 className="sr-only">Listen — {APP_NAME}</h1>
-      <div className="grid gap-10 lg:grid-cols-[300px_1fr_260px]">
+      {/* items-start so the tall library column doesn't stretch the player and
+          push its content down the page — grid items stretch to the row height
+          by default, which put "Choose something to begin" below the fold. */}
+      <div className="grid gap-10 lg:grid-cols-[300px_1fr_260px] lg:items-start">
         {/* Library — left on desktop, bottom sheet on mobile. */}
         <aside className="hidden lg:block">
           <Library

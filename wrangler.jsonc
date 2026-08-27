@@ -84,5 +84,8 @@
   // Secrets (set with `wrangler secret put NAME`, never commit):
   //   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID,
   //   RESEND_API_KEY, APP_URL, JWT_SECRET
+  //   ADMIN_EMAIL — optional. The owner's sign-in email; unlocks the private
+  //     stats panel on /account (GET /api/admin/stats). Unset = route 404s for
+  //     everyone, so it can never fall open.
   // Managed Payments (merchant of record) is always on in code — no flag.
 }
