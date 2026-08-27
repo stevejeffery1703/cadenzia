@@ -30,7 +30,7 @@ function Hero() {
       <h1 className="text-display text-accent">{APP_NAME}</h1>
       <p className="mt-6 text-xl font-light text-ink-soft">Find your cadence.</p>
       <p className="mt-3 max-w-sm text-sm text-ink-faint">
-        Acoustic piano, played and recorded by hand.
+        Acoustic piano, played and recorded by hand. Never AI-generated.
       </p>
       <Link to="/app" className="btn-primary mt-12">
         Begin listening
@@ -75,7 +75,8 @@ function MadeByHand() {
         <h2 className="text-h2 mt-3 text-ink">Someone sat down and played this.</h2>
         <p className="mx-auto mt-5 max-w-lg text-sm leading-relaxed text-ink-soft">
           Every piece here is an acoustic piano performance — played, recorded and mastered by
-          hand, one at a time. Nothing is generated, and nothing is assembled from a model. It is
+          hand, one at a time. <span className="text-ink">No AI is used anywhere in this
+          catalogue</span>: nothing is generated, and nothing is assembled from a model. It is
           simply the music we wanted to work to, made carefully enough to disappear into.
         </p>
       </div>

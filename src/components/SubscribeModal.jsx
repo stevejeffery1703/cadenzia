@@ -46,7 +46,8 @@ export default function SubscribeModal({ open, onClose }) {
         <h2 className="text-h2 text-ink">The full collection.</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
           Every piece in the library, and every new one as it's recorded — acoustic piano, played
-          and mastered by hand. It keeps playing while you work in other apps or your screen sleeps.
+          and mastered by hand, never AI-generated. It keeps playing while you work in other apps or
+          your screen sleeps.
         </p>
 
         {/* Payments are off pre-launch. The server refuses checkout regardless

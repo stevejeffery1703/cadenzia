@@ -58,8 +58,8 @@ export default function PremiumInvite({ open, track, onClose, onSubscribe }) {
           of the full collection.
         </h2>
         <p className="mx-auto mt-4 text-sm leading-relaxed text-ink-soft">
-          Every piece is played and recorded by hand, and a new one is added regularly. Subscribing
-          opens the whole library — and everything recorded from here on.
+          Every piece is played and recorded by hand — never AI-generated — and a new one is added
+          regularly. Subscribing opens the whole library, and everything recorded from here on.
         </p>
 
         {PAYMENTS_ENABLED && (

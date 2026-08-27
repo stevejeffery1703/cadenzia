@@ -24,8 +24,13 @@ export default function Nav({ isSubscriber, isSignedIn }) {
           <Logo size={28} />
           <span className="font-display text-2xl font-normal text-accent">{APP_NAME}</span>
         </Link>
-        <div className="flex items-center gap-7">
+        {/* Tighter gap on small screens — three links plus the wordmark would
+            otherwise overflow a narrow phone. */}
+        <div className="flex items-center gap-5 sm:gap-7">
           {link('/app', 'Listen')}
+          {/* Science sits in the top bar, not just the footer: the music is
+              hand-played, and how it's made is a reason to trust the product. */}
+          {link('/science', 'Science')}
           {link('/account', isSignedIn ? 'Account' : 'Sign in')}
           {/* No subscribe CTA while payments are off — see PAYMENTS_ENABLED. */}
           {!isSubscriber && PAYMENTS_ENABLED && (

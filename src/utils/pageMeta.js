@@ -8,12 +8,12 @@ export const PAGE_META = {
   '/': {
     title: 'Cadenzia — Find your cadence',
     description:
-      'Acoustic piano for deep focus, creativity, and calm — played and recorded by hand, never generated.',
+      'Acoustic piano for deep focus, creativity, and calm — played and recorded by hand, never AI-generated.',
   },
   '/app': {
     title: 'Listen — Cadenzia',
     description:
-      'Stream acoustic piano for deep focus, creativity, and calm. Free to begin, with no time limit.',
+      'Stream acoustic piano for deep focus, creativity, and calm — never AI-generated. Free to begin, with no time limit.',
   },
   '/science': {
     title: 'The science, plainly — Cadenzia',
